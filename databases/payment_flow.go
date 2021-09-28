@@ -3,7 +3,7 @@ package databases
 import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/datatypes"
-	"github.com/eden-w2w/lib-modules/contants/enums"
+	"github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 //go:generate eden generate model PaymentFlow --database Config.DB --with-comments

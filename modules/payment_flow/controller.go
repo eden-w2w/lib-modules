@@ -4,8 +4,8 @@ import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
-	"github.com/eden-w2w/lib-modules/contants/enums"
-	"github.com/eden-w2w/lib-modules/contants/errors"
+	"github.com/eden-w2w/lib-modules/constants/enums"
+	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/sirupsen/logrus"
@@ -49,7 +49,7 @@ func (c Controller) GetPaymentFlowByID(flowID uint64, db sqlx.DBExecutor, forUpd
 	}
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return nil, errors.PaymentFlowNotFound
+			return nil, general_errors.PaymentFlowNotFound
 		}
 		logrus.Errorf("[GetPaymentFlowByID] err: %v, flowID: %d", err, flowID)
 	}
@@ -77,7 +77,7 @@ func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DB
 	err := model.Create(c.db)
 	if err != nil {
 		logrus.Errorf("[CreatePaymentFlow] model.Create err: %v, params: %+v", err, params)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 	return model, nil
 }
@@ -94,12 +94,12 @@ func (c Controller) GetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBEx
 	models, err := model.BatchFetchByOrderAndUserID(db, orderID, userID, enums.PAYMENT_STATUS__SUCCESS)
 	if err != nil {
 		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndUserID err: %v, orderID: %d, userID: %d", err, orderID, userID)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 
 	if len(models) == 0 {
 		logrus.Errorf("[GetFlowByOrderAndUserID] len(models) == 0, orderID: %d, userID: %d", orderID, userID)
-		return nil, errors.PaymentFlowNotFound
+		return nil, general_errors.PaymentFlowNotFound
 	}
 
 	return &models[0], nil
@@ -119,7 +119,7 @@ func (c Controller) UpdatePaymentFlowRemoteID(flowID uint64, prepayID string, db
 	err := model.UpdateByFlowIDWithMap(db, fields)
 	if err != nil {
 		logrus.Errorf("[UpdatePaymentFlowRemoteID] model.UpdateByFlowIDWithMap err: %v, flowID: %d, remoteID: %s", err, flowID, prepayID)
-		return errors.InternalError
+		return general_errors.InternalError
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 	}
 	if trans == nil {
 		logrus.Errorf("[UpdatePaymentFlowSuccess] trans == nil")
-		return errors.InternalError
+		return general_errors.InternalError
 	}
 	if db == nil {
 		db = c.db
@@ -138,13 +138,13 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 
 	if !flow.Status.CheckNextStatusIsValid(status) {
 		logrus.Errorf("[UpdatePaymentFlowStatus] !flow.Status.CheckNextStatusIsValid(status), currentStatus: %s, nextStatus: %s", flow.Status, status)
-		return errors.PaymentFlowNotFound
+		return general_errors.PaymentFlowNotFound
 	}
 
 	transJson, err := trans.MarshalJSON()
 	if err != nil {
 		logrus.Errorf("[UpdatePaymentFlowSuccess] trans.MarshalJSON() err: %v, flowID: %d, status: %s", err, flow.FlowID, status.String())
-		return errors.InternalError
+		return general_errors.InternalError
 	}
 	fields := builder.FieldValues{
 		"RemoteData": string(transJson),
@@ -153,7 +153,7 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 	err = flow.UpdateByFlowIDWithMap(db, fields)
 	if err != nil {
 		logrus.Errorf("[UpdatePaymentFlowSuccess] model.UpdateByFlowIDWithMap err: %v, flowID: %d, status: %s", err, flow.FlowID, status.String())
-		return errors.InternalError
+		return general_errors.InternalError
 	}
 	return nil
 }

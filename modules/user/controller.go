@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/datatypes"
-	"github.com/eden-w2w/lib-modules/contants/errors"
+	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/sirupsen/logrus"
@@ -48,7 +48,7 @@ func (c Controller) CreateUserByWechatSession(params CreateUserByWechatSessionPa
 	err := model.Create(c.db)
 	if err != nil {
 		logrus.Errorf("[CreateUserByWechatSession] model.Create(c.db) err: %v, params: %+v", err, params)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 
 	return model, nil
@@ -66,13 +66,13 @@ func (c Controller) RefreshToken(userID uint64) (*databases.User, error) {
 	err := model.UpdateByUserIDWithStruct(c.db)
 	if err != nil {
 		logrus.Errorf("[RefreshToken] model.UpdateByUserIDWithStruct(c.db) err: %v, userID: %d", err, userID)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 
 	err = model.FetchByUserID(c.db)
 	if err != nil {
 		logrus.Errorf("[RefreshToken] model.UpdateByUserIDWithStruct(c.db) err: %v, userID: %d", err, userID)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 
 	return model, nil
@@ -88,7 +88,7 @@ func (c Controller) UpdateUserInfo(userID uint64, params UpdateUserInfoParams) e
 	err := model.FetchByUserID(c.db)
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return errors.UserNotFound
+			return general_errors.UserNotFound
 		}
 		logrus.Errorf("[UpdateUserInfo] model.FetchByUserID(c.db) err: %v, userID: %d, params: %+v", err, userID, params)
 		return err
@@ -98,7 +98,7 @@ func (c Controller) UpdateUserInfo(userID uint64, params UpdateUserInfoParams) e
 		err = model.UpdateByUserIDWithStruct(c.db)
 		if err != nil {
 			logrus.Errorf("[UpdateUserInfo] model.UpdateByUserIDWithStruct(c.db) err: %v, userID: %d, params: %+v", err, userID, params)
-			return errors.InternalError
+			return general_errors.InternalError
 		}
 	}
 
@@ -131,10 +131,10 @@ func (c Controller) GetUserByUserID(userID uint64, db sqlx.DBExecutor, forUpdate
 	}
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return nil, errors.UserNotFound
+			return nil, general_errors.UserNotFound
 		}
 		logrus.Errorf("[GetUserByUserID] model.FetchByUserID err: %v, userID: %d", err, userID)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 	return model, nil
 }
@@ -149,10 +149,10 @@ func (c Controller) GetUserByOpenID(openID string) (*databases.User, error) {
 	err := model.FetchByOpenID(c.db)
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return nil, errors.UserNotFound
+			return nil, general_errors.UserNotFound
 		}
 		logrus.Errorf("[GetUserByOpenID] model.FetchByOpenID err: %v, openID: %s", err, openID)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 	return model, nil
 }
@@ -167,10 +167,10 @@ func (c Controller) GetUserByToken(token string) (*databases.User, error) {
 	err := model.FetchByToken(c.db)
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return nil, errors.UserNotFound
+			return nil, general_errors.UserNotFound
 		}
 		logrus.Errorf("[GetUserByToken] model.FetchByToken err: %v, token: %s", err, token)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 	return model, nil
 }

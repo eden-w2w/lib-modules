@@ -2,8 +2,8 @@ package settlement_flow
 
 import (
 	"github.com/eden-framework/sqlx"
-	"github.com/eden-w2w/lib-modules/contants/enums"
-	"github.com/eden-w2w/lib-modules/contants/errors"
+	"github.com/eden-w2w/lib-modules/constants/enums"
+	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/robfig/cron/v3"
@@ -76,7 +76,7 @@ func (c Controller) GetSettlementByUserIDAndName(userID uint64, name string, db 
 	}
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return nil, errors.NotFound
+			return nil, general_errors.NotFound
 		}
 		logrus.Errorf("[GetSettlementByUserIDAndName] err: %v, userID: %d, name: %s", err, userID, name)
 		return nil, err

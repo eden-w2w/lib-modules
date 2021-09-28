@@ -4,8 +4,8 @@ import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
-	"github.com/eden-w2w/lib-modules/contants/enums"
-	"github.com/eden-w2w/lib-modules/contants/types"
+	"github.com/eden-w2w/lib-modules/constants/enums"
+	"github.com/eden-w2w/lib-modules/constants/types"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules"
 )
@@ -26,6 +26,10 @@ type CreateOrderParams struct {
 	RefererID uint64 `in:"body" default:"" json:"refererID,string"`
 	// 订单总额
 	TotalPrice uint64 `in:"body" json:"totalPrice"`
+	// 优惠金额
+	DiscountAmount uint64 `in:"body" json:"discountAmount"`
+	// 实际金额
+	ActualAmount uint64 `in:"body" json:"actualAmount"`
 	// 支付方式
 	PaymentMethod enums.PaymentMethod `in:"body" json:"paymentMethod"`
 	// 备注
@@ -96,7 +100,7 @@ func (p GetOrdersParams) Additions() []builder.Addition {
 	return additions
 }
 
-type OrderGoodsListResponse struct {
+type GoodsListResponse struct {
 	// 商品ID
 	GoodsID uint64 `json:"goodsID,string"`
 	// 名称
@@ -125,10 +129,10 @@ type GetMyOrdersResponse struct {
 	// 创建时间
 	CreatedAt datatypes.MySQLTimestamp `json:"createdAt"`
 	// 物料
-	Goods []OrderGoodsListResponse `json:"goods"`
+	Goods []GoodsListResponse `json:"goods"`
 }
 
-type GetMyOrderByIDResponse struct {
+type GetOrderByIDResponse struct {
 	// 业务ID
 	OrderID uint64 `json:"orderID,string"`
 	// 用户ID
@@ -137,6 +141,10 @@ type GetMyOrderByIDResponse struct {
 	RefererID uint64 `json:"refererID,string"`
 	// 订单总额
 	TotalPrice uint64 `json:"totalPrice"`
+	// 优惠金额
+	DiscountAmount uint64 `json:"discountAmount"`
+	// 实际金额
+	ActualAmount uint64 `json:"actualAmount"`
 	// 支付方式
 	PaymentMethod enums.PaymentMethod `json:"paymentMethod"`
 	// 备注
@@ -147,12 +155,37 @@ type GetMyOrderByIDResponse struct {
 	ShippingAddr string `json:"shippingAddr"`
 	// 联系电话
 	Mobile string `json:"mobile"`
+	// 快递公司
+	CourierCompany string `json:"courierCompany"`
+	// 快递单号
+	CourierNumber string `json:"courierNumber"`
 	// 订单状态
 	Status enums.OrderStatus `json:"status"`
+	// 过期时间
+	ExpiredAt datatypes.MySQLTimestamp `json:"expiredAt"`
 	// 创建时间
-	CreatedAt datatypes.MySQLTimestamp `db:"f_created_at,default='0'" json:"createdAt" `
+	CreatedAt datatypes.MySQLTimestamp `json:"createdAt" `
 	// 更新时间
-	UpdatedAt datatypes.MySQLTimestamp `db:"f_updated_at,default='0'" json:"updatedAt"`
+	UpdatedAt datatypes.MySQLTimestamp `json:"updatedAt"`
 	// 物料
-	Goods []OrderGoodsListResponse `json:"goods"`
+	Goods []GoodsListResponse `json:"goods"`
+}
+
+type UpdateOrderParams struct {
+	// 订单状态
+	Status enums.OrderStatus `json:"status" default:""`
+	// 优惠金额
+	DiscountAmount uint64 `json:"discountAmount" default:""`
+	// 备注
+	Remark string `json:"remark" default:""`
+	// 收件人
+	Recipients string `json:"recipients" default:""`
+	// 收货地址
+	ShippingAddr string `json:"shippingAddr" default:""`
+	// 联系电话
+	Mobile string `json:"mobile" default:""`
+	// 快递公司
+	CourierCompany string `json:"courierCompany" default:""`
+	// 快递单号
+	CourierNumber string `json:"courierNumber" default:""`
 }

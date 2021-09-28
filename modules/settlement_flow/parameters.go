@@ -3,7 +3,7 @@ package settlement_flow
 import (
 	"errors"
 	"fmt"
-	"github.com/eden-w2w/lib-modules/contants/enums"
+	"github.com/eden-w2w/lib-modules/constants/enums"
 	"strconv"
 	"strings"
 )

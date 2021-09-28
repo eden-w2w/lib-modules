@@ -2,7 +2,7 @@ package databases
 
 import (
 	"github.com/eden-framework/sqlx/datatypes"
-	"github.com/eden-w2w/lib-modules/contants/enums"
+	"github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 //go:generate eden generate model Order --database Config.DB --with-comments
@@ -21,16 +21,14 @@ type Order struct {
 	RefererID uint64 `json:"refererID,string" db:"f_referer_id,default='0'"`
 	// 订单总额
 	TotalPrice uint64 `json:"totalPrice" db:"f_total_price"`
+	// 优惠金额
+	DiscountAmount uint64 `json:"discountAmount" db:"f_discount_amount,default='0'"`
+	// 实际金额
+	ActualAmount uint64 `json:"actualAmount" db:"f_actual_amount"`
 	// 支付方式
 	PaymentMethod enums.PaymentMethod `json:"paymentMethod" db:"f_payment_method"`
 	// 备注
 	Remark string `json:"remark" db:"f_remark,default='',size=1024"`
-	// 收件人
-	Recipients string `json:"recipients" db:"f_recipients"`
-	// 收货地址
-	ShippingAddr string `json:"shippingAddr" db:"f_shipping_addr"`
-	// 联系电话
-	Mobile string `json:"mobile" db:"f_mobile"`
 	// 订单状态
 	Status enums.OrderStatus `json:"status" db:"f_status"`
 	// 过期时间

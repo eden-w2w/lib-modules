@@ -2,7 +2,7 @@ package databases
 
 import (
 	"github.com/eden-framework/sqlx/datatypes"
-	"github.com/eden-w2w/lib-modules/contants/types"
+	"github.com/eden-w2w/lib-modules/constants/types"
 )
 
 //go:generate eden generate model OrderGoods --database Config.DB --with-comments

@@ -3,7 +3,7 @@ package types
 import (
 	"database/sql/driver"
 	"encoding/json"
-	"github.com/eden-w2w/lib-modules/contants/enums"
+	"github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 type GoodsPicture struct {

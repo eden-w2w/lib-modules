@@ -2,7 +2,7 @@ package promotion_flow
 
 import (
 	"github.com/eden-framework/sqlx"
-	"github.com/eden-w2w/lib-modules/contants/errors"
+	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/sirupsen/logrus"
@@ -47,7 +47,7 @@ func (c Controller) CreatePromotionFlow(params CreatePromotionFlowParams, db sql
 	err := model.Create(db)
 	if err != nil {
 		logrus.Errorf("[CreatePromotionFlow] model.Create err: %v, params: %+v", err, params)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 	return model, nil
 }

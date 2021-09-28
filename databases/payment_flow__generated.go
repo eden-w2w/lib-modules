@@ -7,7 +7,7 @@ import (
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
-	github_com_eden_w2_w_srv_w2_w_internal_contants_enums "github.com/eden-w2w/lib-modules/contants/enums"
+	github_com_eden_w2_w_srv_w2_w_internal_contants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 func (PaymentFlow) PrimaryKey() []string {

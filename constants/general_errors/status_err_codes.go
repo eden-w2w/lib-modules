@@ -1,4 +1,4 @@
-package errors
+package general_errors
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 )
 
 //go:generate eden generate error
-const ServiceStatusErrorCode = 103 * 1e3 // todo rename this
+const ServiceStatusErrorCode = 0 // todo rename this
 
 const (
 	// 请求参数错误
@@ -17,6 +17,8 @@ const (
 const (
 	// 未找到
 	NotFound status_error.StatusErrorCode = http.StatusNotFound*1e6 + ServiceStatusErrorCode + iota
+	// @errTalk 管理员未找到
+	AdminNotFound
 	// @errTalk 用户未找到
 	UserNotFound
 	// @errTalk 订单未找到
@@ -28,6 +30,8 @@ const (
 const (
 	// @errTalk 未授权
 	Unauthorized status_error.StatusErrorCode = http.StatusUnauthorized*1e6 + ServiceStatusErrorCode + iota
+	// @errTalk 用户名或密码错误
+	InvalidUserNamePassword
 )
 
 const (
@@ -39,6 +43,8 @@ const (
 	OrderStatusFlowIncorrect
 	// @errTalk 支付状态流转错误
 	PaymentStatusFlowIncorrect
+	// @errTalk 折扣金额超过订单总额
+	DiscountAmountOverflow
 )
 
 const (
@@ -46,6 +52,10 @@ const (
 	Forbidden status_error.StatusErrorCode = http.StatusForbidden*1e6 + ServiceStatusErrorCode + iota
 	// @errTalk 订单不可重复取消
 	OrderCanceled
+	// @errTalk 订单已支付不允许变更折扣金额
+	NotAllowedChangeAmount
+	// @errTalk 订单状态不允许变更收件信息
+	NotAllowedChangeLogistics
 )
 
 const (

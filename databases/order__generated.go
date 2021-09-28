@@ -7,7 +7,7 @@ import (
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
-	github_com_eden_w2_w_srv_w2_w_internal_contants_enums "github.com/eden-w2w/lib-modules/contants/enums"
+	github_com_eden_w2_w_lib_modules_constants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 func (Order) PrimaryKey() []string {
@@ -43,17 +43,16 @@ func (Order) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
 
 func (Order) Comments() map[string]string {
 	return map[string]string{
-		"ExpiredAt":     "过期时间",
-		"Mobile":        "联系电话",
-		"OrderID":       "业务ID",
-		"PaymentMethod": "支付方式",
-		"Recipients":    "收件人",
-		"RefererID":     "推荐人ID",
-		"Remark":        "备注",
-		"ShippingAddr":  "收货地址",
-		"Status":        "订单状态",
-		"TotalPrice":    "订单总额",
-		"UserID":        "用户ID",
+		"ActualAmount":   "实际金额",
+		"DiscountAmount": "优惠金额",
+		"ExpiredAt":      "过期时间",
+		"OrderID":        "业务ID",
+		"PaymentMethod":  "支付方式",
+		"RefererID":      "推荐人ID",
+		"Remark":         "备注",
+		"Status":         "订单状态",
+		"TotalPrice":     "订单总额",
+		"UserID":         "用户ID",
 	}
 }
 
@@ -80,11 +79,14 @@ func (Order) TableName() string {
 
 func (Order) ColDescriptions() map[string][]string {
 	return map[string][]string{
+		"ActualAmount": []string{
+			"实际金额",
+		},
+		"DiscountAmount": []string{
+			"优惠金额",
+		},
 		"ExpiredAt": []string{
 			"过期时间",
-		},
-		"Mobile": []string{
-			"联系电话",
 		},
 		"OrderID": []string{
 			"业务ID",
@@ -92,17 +94,11 @@ func (Order) ColDescriptions() map[string][]string {
 		"PaymentMethod": []string{
 			"支付方式",
 		},
-		"Recipients": []string{
-			"收件人",
-		},
 		"RefererID": []string{
 			"推荐人ID",
 		},
 		"Remark": []string{
 			"备注",
-		},
-		"ShippingAddr": []string{
-			"收货地址",
 		},
 		"Status": []string{
 			"订单状态",
@@ -156,6 +152,22 @@ func (m *Order) FieldTotalPrice() *github_com_eden_framework_sqlx_builder.Column
 	return OrderTable.F(m.FieldKeyTotalPrice())
 }
 
+func (Order) FieldKeyDiscountAmount() string {
+	return "DiscountAmount"
+}
+
+func (m *Order) FieldDiscountAmount() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderTable.F(m.FieldKeyDiscountAmount())
+}
+
+func (Order) FieldKeyActualAmount() string {
+	return "ActualAmount"
+}
+
+func (m *Order) FieldActualAmount() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderTable.F(m.FieldKeyActualAmount())
+}
+
 func (Order) FieldKeyPaymentMethod() string {
 	return "PaymentMethod"
 }
@@ -170,30 +182,6 @@ func (Order) FieldKeyRemark() string {
 
 func (m *Order) FieldRemark() *github_com_eden_framework_sqlx_builder.Column {
 	return OrderTable.F(m.FieldKeyRemark())
-}
-
-func (Order) FieldKeyRecipients() string {
-	return "Recipients"
-}
-
-func (m *Order) FieldRecipients() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyRecipients())
-}
-
-func (Order) FieldKeyShippingAddr() string {
-	return "ShippingAddr"
-}
-
-func (m *Order) FieldShippingAddr() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyShippingAddr())
-}
-
-func (Order) FieldKeyMobile() string {
-	return "Mobile"
-}
-
-func (m *Order) FieldMobile() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyMobile())
 }
 
 func (Order) FieldKeyStatus() string {
@@ -730,7 +718,7 @@ func (m *Order) BatchFetchByOrderIDList(db github_com_eden_framework_sqlx.DBExec
 
 }
 
-func (m *Order) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_srv_w2_w_internal_contants_enums.OrderStatus) ([]Order, error) {
+func (m *Order) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.OrderStatus) ([]Order, error) {
 
 	if len(values) == 0 {
 		return nil, nil

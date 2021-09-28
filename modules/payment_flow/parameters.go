@@ -1,7 +1,7 @@
 package payment_flow
 
 import (
-	"github.com/eden-w2w/lib-modules/contants/enums"
+	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 )

@@ -6,7 +6,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"sync"
 
-	"github.com/eden-w2w/lib-modules/contants/errors"
+	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 )
 
@@ -38,6 +38,7 @@ func (c *Controller) Init(db sqlx.DBExecutor) {
 	}
 	c.db = db
 	c.managers = managers
+	c.isInit = true
 }
 
 func (c Controller) GetGoods(p GetGoodsParams) ([]databases.Goods, error) {
@@ -48,7 +49,7 @@ func (c Controller) GetGoods(p GetGoodsParams) ([]databases.Goods, error) {
 	goods, err := m.List(c.db, p.Conditions(c.db), p.Additions()...)
 	if err != nil {
 		logrus.Errorf("[GetGoods] m.List err: %v, params: %+v", err, p)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 	return goods, nil
 }
@@ -61,7 +62,7 @@ func (c Controller) GetGoodsByID(goodsID uint64) (*databases.Goods, error) {
 	err := m.FetchByGoodsID(c.db)
 	if err != nil {
 		logrus.Errorf("[GetGood] m.FetchByGoodsID err: %v, goodsID: %d", err, goodsID)
-		return nil, errors.InternalError
+		return nil, general_errors.InternalError
 	}
 	return m, nil
 }
@@ -78,7 +79,7 @@ func (c Controller) LockInventory(db sqlx.DBExecutor, goodsID uint64, amount uin
 		err := goods.FetchByGoodsID(db)
 		if err != nil {
 			logrus.Errorf("[LockInventory] goods.FetchByGoodsID(db) err: %v, goodsID: %d", err, goodsID)
-			return errors.InternalError
+			return general_errors.InternalError
 		}
 
 		inventory := goods.Inventory - uint64(amount)
@@ -88,14 +89,14 @@ func (c Controller) LockInventory(db sqlx.DBExecutor, goodsID uint64, amount uin
 		err = goods.UpdateByGoodsIDWithMap(db, f)
 		if err != nil {
 			logrus.Errorf("[LockInventory] goods.UpdateByGoodsIDWithStruct(db) err: %v, goodsID: %d, fields: %+v", err, goodsID, f)
-			return errors.InternalError
+			return general_errors.InternalError
 		}
 
 		return nil
 	}
 
 	logrus.Errorf("[LockInventory] goodsID not found, goodsID: %d", goodsID)
-	return errors.NotFound
+	return general_errors.NotFound
 }
 
 func (c Controller) UnlockInventory(db sqlx.DBExecutor, goodsID uint64, amount uint32) error {
@@ -110,7 +111,7 @@ func (c Controller) UnlockInventory(db sqlx.DBExecutor, goodsID uint64, amount u
 		err := goods.FetchByGoodsID(db)
 		if err != nil {
 			logrus.Errorf("[UnlockInventory] goods.FetchByGoodsID(db) err: %v, goodsID: %d", err, goodsID)
-			return errors.InternalError
+			return general_errors.InternalError
 		}
 
 		inventory := goods.Inventory + uint64(amount)
@@ -120,12 +121,58 @@ func (c Controller) UnlockInventory(db sqlx.DBExecutor, goodsID uint64, amount u
 		err = goods.UpdateByGoodsIDWithMap(db, f)
 		if err != nil {
 			logrus.Errorf("[LockInventory] goods.UpdateByGoodsIDWithStruct(db) err: %v, goodsID: %d, fields: %+v", err, goodsID, f)
-			return errors.InternalError
+			return general_errors.InternalError
 		}
 
 		return nil
 	}
 
 	logrus.Errorf("[UnlockInventory] goodsID not found, goodsID: %d", goodsID)
-	return errors.NotFound
+	return general_errors.NotFound
+}
+
+func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams) error {
+	model := &databases.Goods{GoodsID: goodsID}
+	if params.Name != "" {
+		model.Name = params.Name
+	}
+	if params.Comment != "" {
+		model.Comment = params.Comment
+	}
+	if params.DispatchAddr != "" {
+		model.DispatchAddr = params.DispatchAddr
+	}
+	if params.Sales != 0 {
+		model.Sales = params.Sales
+	}
+	if params.MainPicture != "" {
+		model.MainPicture = params.MainPicture
+	}
+	if len(params.Pictures) > 0 {
+		model.Pictures = params.Pictures
+	}
+	if len(params.Specifications) > 0 {
+		model.Specifications = params.Specifications
+	}
+	if len(params.Activities) > 0 {
+		model.Activities = params.Activities
+	}
+	if params.LogisticPolicy != "" {
+		model.LogisticPolicy = params.LogisticPolicy
+	}
+	if params.Price != 0 {
+		model.Price = params.Price
+	}
+	if params.Inventory != 0 {
+		model.Inventory = params.Inventory
+	}
+	if params.Detail != "" {
+		model.Detail = params.Detail
+	}
+	err := model.UpdateByGoodsIDWithStruct(c.db)
+	if err != nil {
+		logrus.Errorf("[UpdateGoods] model.UpdateByGoodsIDWithStruct err: %v, params: %+v", err, params)
+		return general_errors.InternalError
+	}
+	return nil
 }
