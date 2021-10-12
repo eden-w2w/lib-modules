@@ -61,6 +61,9 @@ func (c Controller) GetGoodsByID(goodsID uint64) (*databases.Goods, error) {
 	m := &databases.Goods{GoodsID: goodsID}
 	err := m.FetchByGoodsID(c.db)
 	if err != nil {
+		if sqlx.DBErr(err).IsNotFound() {
+			return nil, general_errors.GoodsNotFound
+		}
 		logrus.Errorf("[GetGood] m.FetchByGoodsID err: %v, goodsID: %d", err, goodsID)
 		return nil, general_errors.InternalError
 	}

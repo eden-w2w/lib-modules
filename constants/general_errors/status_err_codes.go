@@ -25,6 +25,8 @@ const (
 	OrderNotFound
 	// @errTalk 支付流水号未找到
 	PaymentFlowNotFound
+	// @errTalk 商品未找到
+	GoodsNotFound
 )
 
 const (

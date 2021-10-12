@@ -20,9 +20,9 @@ type Administrators struct {
 	// 密码
 	Password string `json:"-" db:"f_password"`
 	// 访问令牌
-	Token string `json:"token" db:"f_token"`
+	Token string `json:"token" db:"f_token,default=''"`
 	// 访问令牌过期时间
-	ExpiredAt datatypes.MySQLTimestamp `json:"expiredAt" db:"f_expired_at"`
+	ExpiredAt datatypes.MySQLTimestamp `json:"expiredAt" db:"f_expired_at,default='0'"`
 
 	datatypes.OperateTime
 }

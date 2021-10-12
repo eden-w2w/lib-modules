@@ -27,7 +27,7 @@ type CreateOrderParams struct {
 	// 订单总额
 	TotalPrice uint64 `in:"body" json:"totalPrice"`
 	// 优惠金额
-	DiscountAmount uint64 `in:"body" json:"discountAmount"`
+	DiscountAmount uint64 `in:"body" default:"" json:"discountAmount"`
 	// 实际金额
 	ActualAmount uint64 `in:"body" json:"actualAmount"`
 	// 支付方式
