@@ -3,6 +3,7 @@ package user
 import (
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-w2w/lib-modules/databases"
+	"github.com/eden-w2w/lib-modules/modules"
 )
 
 type CreateUserByWechatSessionParams struct {
@@ -59,22 +60,34 @@ func (p UpdateUserInfoParams) Diff(model *databases.User) (change bool) {
 }
 
 type GetUsersParams struct {
+	// 业务ID
+	UserID uint64 `in:"query" name:"userID" default:""`
+	// 推荐人ID
+	RefererID uint64 `in:"query" name:"refererID" default:""`
 	// 用户名
-	UserName string `in:"body" json:"userName" default:""`
+	UserName string `in:"query" name:"userName" default:""`
 	// 手机号
-	Mobile string `in:"body" json:"mobile" default:""`
+	Mobile string `in:"query" name:"mobile" default:""`
 	// 昵称
-	NickName string `in:"body" json:"nickName" default:""`
+	NickName string `in:"query" name:"nickName" default:""`
 	// 微信OpenID
-	OpenID string `in:"body" json:"openID" default:""`
+	OpenID string `in:"query" name:"openID" default:""`
 	// 微信UnionID
-	UnionID string `in:"body" json:"unionID" default:""`
+	UnionID string `in:"query" name:"unionID" default:""`
+
+	modules.Pagination
 }
 
 func (p GetUsersParams) Conditions() builder.SqlCondition {
 	var condition builder.SqlCondition
 	table := databases.User{}
 
+	if p.UserID != 0 {
+		condition = builder.And(condition, table.FieldUserID().Eq(p.UserID))
+	}
+	if p.RefererID != 0 {
+		condition = builder.And(condition, table.FieldRefererID().Eq(p.RefererID))
+	}
 	if p.UserName != "" {
 		condition = builder.And(condition, table.FieldUserName().Eq(p.UserName))
 	}
@@ -82,7 +95,7 @@ func (p GetUsersParams) Conditions() builder.SqlCondition {
 		condition = builder.And(condition, table.FieldMobile().Eq(p.Mobile))
 	}
 	if p.NickName != "" {
-		condition = builder.And(condition, table.FieldNickName().Eq(p.NickName))
+		condition = builder.And(condition, table.FieldNickName().Like(p.NickName))
 	}
 	if p.OpenID != "" {
 		condition = builder.And(condition, table.FieldOpenID().Eq(p.OpenID))
@@ -92,6 +105,22 @@ func (p GetUsersParams) Conditions() builder.SqlCondition {
 	}
 
 	return condition
+}
+
+func (p GetUsersParams) Additions() []builder.Addition {
+	var additions = make([]builder.Addition, 0)
+
+	if p.Size != 0 {
+		limit := builder.Limit(int64(p.Size))
+		if p.Offset != 0 {
+			limit.Offset(int64(p.Offset))
+		}
+		additions = append(additions, limit)
+	}
+
+	additions = append(additions, builder.OrderBy(builder.DescOrder((&databases.Order{}).FieldCreatedAt())))
+
+	return additions
 }
 
 type GetUserByNameOrOpenIDParams struct {

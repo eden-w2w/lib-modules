@@ -19,10 +19,14 @@ type PromotionFlow struct {
 	UserID uint64 `json:"userID,string" db:"f_user_id"`
 	// 获得奖励的用户昵称
 	UserNickName string `json:"userNickName" db:"f_user_nick_name,default=''"`
+	// 获取奖励的用户OpenID
+	UserOpenID string `json:"userOpenID" db:"f_user_open_id"`
 	// 奖励来源用户ID
 	RefererID uint64 `json:"refererID,string" db:"f_referer_id"`
 	// 奖励来源的用户昵称
 	RefererNickName string `json:"refererNickName" db:"f_referer_nick_name,default=''"`
+	// 奖励来源的用户OpenID
+	RefererOpenID string `json:"refererOpenID" db:"f_referer_open_id"`
 	// 订单金额
 	Amount uint64 `json:"amount" db:"f_amount"`
 	// 关联的支付流水

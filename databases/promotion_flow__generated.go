@@ -50,9 +50,11 @@ func (PromotionFlow) Comments() map[string]string {
 		"PaymentFlowID":   "关联的支付流水",
 		"RefererID":       "奖励来源用户ID",
 		"RefererNickName": "奖励来源的用户昵称",
+		"RefererOpenID":   "奖励来源的用户OpenID",
 		"SettlementID":    "关联的结算单ID",
 		"UserID":          "获得奖励的用户ID",
 		"UserNickName":    "获得奖励的用户昵称",
+		"UserOpenID":      "获取奖励的用户OpenID",
 	}
 }
 
@@ -94,6 +96,9 @@ func (PromotionFlow) ColDescriptions() map[string][]string {
 		"RefererNickName": []string{
 			"奖励来源的用户昵称",
 		},
+		"RefererOpenID": []string{
+			"奖励来源的用户OpenID",
+		},
 		"SettlementID": []string{
 			"关联的结算单ID",
 		},
@@ -102,6 +107,9 @@ func (PromotionFlow) ColDescriptions() map[string][]string {
 		},
 		"UserNickName": []string{
 			"获得奖励的用户昵称",
+		},
+		"UserOpenID": []string{
+			"获取奖励的用户OpenID",
 		},
 	}
 }
@@ -138,6 +146,14 @@ func (m *PromotionFlow) FieldUserNickName() *github_com_eden_framework_sqlx_buil
 	return PromotionFlowTable.F(m.FieldKeyUserNickName())
 }
 
+func (PromotionFlow) FieldKeyUserOpenID() string {
+	return "UserOpenID"
+}
+
+func (m *PromotionFlow) FieldUserOpenID() *github_com_eden_framework_sqlx_builder.Column {
+	return PromotionFlowTable.F(m.FieldKeyUserOpenID())
+}
+
 func (PromotionFlow) FieldKeyRefererID() string {
 	return "RefererID"
 }
@@ -152,6 +168,14 @@ func (PromotionFlow) FieldKeyRefererNickName() string {
 
 func (m *PromotionFlow) FieldRefererNickName() *github_com_eden_framework_sqlx_builder.Column {
 	return PromotionFlowTable.F(m.FieldKeyRefererNickName())
+}
+
+func (PromotionFlow) FieldKeyRefererOpenID() string {
+	return "RefererOpenID"
+}
+
+func (m *PromotionFlow) FieldRefererOpenID() *github_com_eden_framework_sqlx_builder.Column {
+	return PromotionFlowTable.F(m.FieldKeyRefererOpenID())
 }
 
 func (PromotionFlow) FieldKeyAmount() string {

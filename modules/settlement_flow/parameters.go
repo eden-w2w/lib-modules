@@ -6,6 +6,7 @@ import (
 	"github.com/eden-w2w/lib-modules/constants/enums"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type SettlementConfig struct {
@@ -15,6 +16,8 @@ type SettlementConfig struct {
 	SettlementDate uint8
 	// 提成比例规则
 	SettlementRules []SettlementRule
+	// 结算等待期，同时也是退货有效期
+	SettlementDuration time.Duration
 }
 
 func (c SettlementConfig) ToSettlementCronRule() string {
@@ -24,6 +27,15 @@ func (c SettlementConfig) ToSettlementCronRule() string {
 		return fmt.Sprintf("0 0 0 %d * *", c.SettlementDate)
 	}
 	return ""
+}
+
+func (c SettlementConfig) GetProportion(sales uint64) float64 {
+	for _, rule := range c.SettlementRules {
+		if sales >= rule.MinSales && sales < rule.MaxSales {
+			return rule.Proportion
+		}
+	}
+	return 0
 }
 
 func (s *SettlementRule) UnmarshalText(text []byte) (err error) {
@@ -65,6 +77,10 @@ func (s SettlementRule) String() string {
 type CreateSettlementParams struct {
 	// 用户ID
 	UserID uint64 `in:"body" json:"userID,string" default:""`
+	// 昵称
+	NickName string `in:"body" json:"nickName" default:""`
+	// OpenID
+	OpenID string `in:"body" json:"openID"`
 	// 名称
 	Name string `in:"body" json:"name"`
 	// 销售总额

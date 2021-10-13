@@ -47,8 +47,10 @@ func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.O
 	_, err = proCtrl.CreatePromotionFlow(promotion_flow.CreatePromotionFlowParams{
 		UserID:          refererUser.UserID,
 		UserNickName:    refererUser.NickName,
+		UserOpenID:      refererUser.OpenID,
 		RefererID:       orderUser.UserID,
 		RefererNickName: orderUser.NickName,
+		RefererOpenID:   orderUser.OpenID,
 		Amount:          flow.Amount,
 		PaymentFlowID:   flow.FlowID,
 	}, db)

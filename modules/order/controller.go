@@ -372,29 +372,29 @@ func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.Ord
 		db = c.db
 	}
 	if params.Status != enums.ORDER_STATUS_UNKNOWN && params.Status != enums.ORDER_STATUS__CLOSED {
-		if err := c.updateOrderStatus(db, order, params.Status); err != nil {
+		if err = c.updateOrderStatus(db, order, params.Status); err != nil {
 			return err
 		}
 	}
 	if params.DiscountAmount != 0 {
-		if err := c.updateOrderDiscount(db, order, params.DiscountAmount); err != nil {
+		if err = c.updateOrderDiscount(db, order, params.DiscountAmount); err != nil {
 			return err
 		}
 	}
 	if params.Recipients != "" || params.ShippingAddr != "" || params.Mobile != "" {
-		if err := c.updateOrderLogistics(db, order, logistics, params.Recipients, params.ShippingAddr, params.Mobile); err != nil {
+		if err = c.updateOrderLogistics(db, order, logistics, params.Recipients, params.ShippingAddr, params.Mobile); err != nil {
 			return err
 		}
 	}
 
 	if params.CourierCompany != "" || params.CourierNumber != "" {
-		if err := c.updateCourierInfo(db, logistics, params.CourierCompany, params.CourierNumber); err != nil {
+		if err = c.updateCourierInfo(db, logistics, params.CourierCompany, params.CourierNumber); err != nil {
 			return err
 		}
 	}
 
 	if params.Remark != "" {
-		if err := c.updateOrderRemark(db, order, params.Remark); err != nil {
+		if err = c.updateOrderRemark(db, order, params.Remark); err != nil {
 			return err
 		}
 	}
@@ -412,7 +412,7 @@ func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.Ord
 		err = c.eventHandler.OnOrderCompleteEvent(db, order)
 	}
 
-	return nil
+	return err
 }
 
 func (c Controller) CancelOrder(orderID, userID uint64, unlocker InventoryUnlock) error {

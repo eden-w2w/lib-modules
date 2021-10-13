@@ -33,6 +33,23 @@ func (c *Controller) Init(db sqlx.DBExecutor) {
 	c.isInit = true
 }
 
+func (c Controller) GetUsers(params GetUsersParams, withCount bool) (result []databases.User, count int, err error) {
+	model := &databases.User{}
+	result, err = model.List(c.db, params.Conditions(), params.Additions()...)
+	if err != nil {
+		logrus.Errorf("[GetUsers] model.List err: %v, params: %+v", err, params)
+		return nil, 0, general_errors.InternalError
+	}
+	if withCount {
+		count, err = model.Count(c.db, params.Conditions())
+		if err != nil {
+			logrus.Errorf("[GetUsers] model.Count err: %v, params: %+v", err, params)
+			return nil, 0, general_errors.InternalError
+		}
+	}
+	return
+}
+
 func (c Controller) CreateUserByWechatSession(params CreateUserByWechatSessionParams) (*databases.User, error) {
 	if !c.isInit {
 		logrus.Panicf("[UserController] not Init")

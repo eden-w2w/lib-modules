@@ -41,6 +41,8 @@ func (SettlementFlow) Comments() map[string]string {
 	return map[string]string{
 		"Amount":       "结算金额",
 		"Name":         "名称",
+		"NickName":     "昵称",
+		"OpenID":       "OpenID",
 		"Proportion":   "计算比例",
 		"SettlementID": "结算单ID",
 		"Status":       "结算状态",
@@ -77,6 +79,12 @@ func (SettlementFlow) ColDescriptions() map[string][]string {
 		},
 		"Name": []string{
 			"名称",
+		},
+		"NickName": []string{
+			"昵称",
+		},
+		"OpenID": []string{
+			"OpenID",
 		},
 		"Proportion": []string{
 			"计算比例",
@@ -118,6 +126,22 @@ func (SettlementFlow) FieldKeyUserID() string {
 
 func (m *SettlementFlow) FieldUserID() *github_com_eden_framework_sqlx_builder.Column {
 	return SettlementFlowTable.F(m.FieldKeyUserID())
+}
+
+func (SettlementFlow) FieldKeyNickName() string {
+	return "NickName"
+}
+
+func (m *SettlementFlow) FieldNickName() *github_com_eden_framework_sqlx_builder.Column {
+	return SettlementFlowTable.F(m.FieldKeyNickName())
+}
+
+func (SettlementFlow) FieldKeyOpenID() string {
+	return "OpenID"
+}
+
+func (m *SettlementFlow) FieldOpenID() *github_com_eden_framework_sqlx_builder.Column {
+	return SettlementFlowTable.F(m.FieldKeyOpenID())
 }
 
 func (SettlementFlow) FieldKeyName() string {

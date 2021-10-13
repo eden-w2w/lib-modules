@@ -39,8 +39,10 @@ func (c Controller) CreatePromotionFlow(params CreatePromotionFlowParams, db sql
 		FlowID:          id,
 		UserID:          params.UserID,
 		UserNickName:    params.UserNickName,
+		UserOpenID:      params.UserOpenID,
 		RefererID:       params.RefererID,
 		RefererNickName: params.RefererNickName,
+		RefererOpenID:   params.RefererOpenID,
 		Amount:          params.Amount,
 		PaymentFlowID:   params.PaymentFlowID,
 	}
@@ -62,4 +64,20 @@ func (c Controller) GetPromotionFlows(params GetPromotionFlowParams) (list []dat
 		logrus.Errorf("[GetPromotionFlows] model.List err: %v, params: %+v", err, params)
 	}
 	return
+}
+
+func (c Controller) UpdatePromotionSettlements(flowID, settlementID uint64, db sqlx.DBExecutor) error {
+	if db == nil {
+		db = c.db
+	}
+	model := &databases.PromotionFlow{
+		FlowID:       flowID,
+		SettlementID: settlementID,
+	}
+	err := model.UpdateByFlowIDWithStruct(db)
+	if err != nil {
+		logrus.Errorf("[PromotionFlowController] model.UpdateByFlowIDWithStruct err: %v, flowID: %d, settlementID: %d", err, flowID, settlementID)
+		return err
+	}
+	return nil
 }
