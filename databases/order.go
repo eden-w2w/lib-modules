@@ -17,8 +17,10 @@ type Order struct {
 	OrderID uint64 `json:"orderID,string" db:"f_order_id"`
 	// 用户ID
 	UserID uint64 `json:"userID,string" db:"f_user_id"`
-	// 推荐人ID
-	RefererID uint64 `json:"refererID,string" db:"f_referer_id,default='0'"`
+	// 用户昵称
+	NickName string `json:"nickName" db:"f_nick_name,default=''"`
+	// 微信OpenID
+	UserOpenID string `json:"userOpenID" db:"f_user_open_id,default=''"`
 	// 订单总额
 	TotalPrice uint64 `json:"totalPrice" db:"f_total_price"`
 	// 优惠金额

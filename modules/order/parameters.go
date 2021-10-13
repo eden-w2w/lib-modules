@@ -22,8 +22,6 @@ type EventHandler interface {
 type CreateOrderParams struct {
 	// 用户ID
 	UserID uint64 `in:"body" default:"" json:"userID,string"`
-	// 推荐人ID
-	RefererID uint64 `in:"body" default:"" json:"refererID,string"`
 	// 订单总额
 	TotalPrice uint64 `in:"body" json:"totalPrice"`
 	// 优惠金额
@@ -137,8 +135,10 @@ type GetOrderByIDResponse struct {
 	OrderID uint64 `json:"orderID,string"`
 	// 用户ID
 	UserID uint64 `json:"userID,string"`
-	// 推荐人ID
-	RefererID uint64 `json:"refererID,string"`
+	// 昵称
+	NickName string `json:"nickName"`
+	// 微信OpenID
+	OpenID string `json:"openID"`
 	// 订单总额
 	TotalPrice uint64 `json:"totalPrice"`
 	// 优惠金额

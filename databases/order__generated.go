@@ -46,13 +46,14 @@ func (Order) Comments() map[string]string {
 		"ActualAmount":   "实际金额",
 		"DiscountAmount": "优惠金额",
 		"ExpiredAt":      "过期时间",
+		"NickName":       "用户昵称",
 		"OrderID":        "业务ID",
 		"PaymentMethod":  "支付方式",
-		"RefererID":      "推荐人ID",
 		"Remark":         "备注",
 		"Status":         "订单状态",
 		"TotalPrice":     "订单总额",
 		"UserID":         "用户ID",
+		"UserOpenID":     "微信OpenID",
 	}
 }
 
@@ -88,14 +89,14 @@ func (Order) ColDescriptions() map[string][]string {
 		"ExpiredAt": []string{
 			"过期时间",
 		},
+		"NickName": []string{
+			"用户昵称",
+		},
 		"OrderID": []string{
 			"业务ID",
 		},
 		"PaymentMethod": []string{
 			"支付方式",
-		},
-		"RefererID": []string{
-			"推荐人ID",
 		},
 		"Remark": []string{
 			"备注",
@@ -108,6 +109,9 @@ func (Order) ColDescriptions() map[string][]string {
 		},
 		"UserID": []string{
 			"用户ID",
+		},
+		"UserOpenID": []string{
+			"微信OpenID",
 		},
 	}
 }
@@ -136,12 +140,20 @@ func (m *Order) FieldUserID() *github_com_eden_framework_sqlx_builder.Column {
 	return OrderTable.F(m.FieldKeyUserID())
 }
 
-func (Order) FieldKeyRefererID() string {
-	return "RefererID"
+func (Order) FieldKeyNickName() string {
+	return "NickName"
 }
 
-func (m *Order) FieldRefererID() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyRefererID())
+func (m *Order) FieldNickName() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderTable.F(m.FieldKeyNickName())
+}
+
+func (Order) FieldKeyUserOpenID() string {
+	return "UserOpenID"
+}
+
+func (m *Order) FieldUserOpenID() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderTable.F(m.FieldKeyUserOpenID())
 }
 
 func (Order) FieldKeyTotalPrice() string {

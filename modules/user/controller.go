@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"encoding/hex"
 	"github.com/eden-framework/sqlx"
+	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
@@ -173,4 +174,17 @@ func (c Controller) GetUserByToken(token string) (*databases.User, error) {
 		return nil, general_errors.InternalError
 	}
 	return model, nil
+}
+
+func (c Controller) GetUserByNameOrOpenID(params GetUserByNameOrOpenIDParams) ([]databases.User, error) {
+	if !c.isInit {
+		logrus.Panicf("[UserController] not Init")
+	}
+	model := databases.User{}
+	list, err := model.List(c.db, params.Conditions(), builder.Limit(10))
+	if err != nil {
+		logrus.Errorf("[GetUserByNameOrOpenID] model.List err: %v, keywords: %s", err, params.Keywords)
+		return nil, general_errors.InternalError
+	}
+	return list, nil
 }

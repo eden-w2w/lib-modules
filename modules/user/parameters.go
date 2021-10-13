@@ -1,7 +1,6 @@
 package user
 
 import (
-	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-w2w/lib-modules/databases"
 )
@@ -67,30 +66,43 @@ type GetUsersParams struct {
 	// 昵称
 	NickName string `in:"body" json:"nickName" default:""`
 	// 微信OpenID
-	OpenID string `json:"openID" db:"f_open_id,default=''"`
+	OpenID string `in:"body" json:"openID" default:""`
 	// 微信UnionID
-	UnionID string `json:"unionID" db:"f_union_id,default=''"`
+	UnionID string `in:"body" json:"unionID" default:""`
 }
 
-func (p GetUsersParams) Conditions(db sqlx.DBExecutor) builder.SqlCondition {
+func (p GetUsersParams) Conditions() builder.SqlCondition {
 	var condition builder.SqlCondition
-	table := db.T(databases.User{})
+	table := databases.User{}
 
 	if p.UserName != "" {
-		condition = builder.And(condition, table.F("UserName").Eq(p.UserName))
+		condition = builder.And(condition, table.FieldUserName().Eq(p.UserName))
 	}
 	if p.Mobile != "" {
-		condition = builder.And(condition, table.F("Mobile").Eq(p.Mobile))
+		condition = builder.And(condition, table.FieldMobile().Eq(p.Mobile))
 	}
 	if p.NickName != "" {
-		condition = builder.And(condition, table.F("NickName").Eq(p.NickName))
+		condition = builder.And(condition, table.FieldNickName().Eq(p.NickName))
 	}
 	if p.OpenID != "" {
-		condition = builder.And(condition, table.F("OpenID").Eq(p.OpenID))
+		condition = builder.And(condition, table.FieldOpenID().Eq(p.OpenID))
 	}
 	if p.UnionID != "" {
-		condition = builder.And(condition, table.F("Token").Eq(p.UnionID))
+		condition = builder.And(condition, table.FieldUnionID().Eq(p.UnionID))
 	}
+
+	return condition
+}
+
+type GetUserByNameOrOpenIDParams struct {
+	// 关键字
+	Keywords string `in:"query" name:"keywords"`
+}
+
+func (p GetUserByNameOrOpenIDParams) Conditions() builder.SqlCondition {
+	model := databases.User{}
+	condition := model.FieldNickName().Like(p.Keywords)
+	condition = builder.Or(condition, model.FieldOpenID().Eq(p.Keywords))
 
 	return condition
 }

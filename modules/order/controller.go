@@ -6,6 +6,7 @@ import (
 	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
+	"github.com/eden-w2w/lib-modules/modules/user"
 	"github.com/sirupsen/logrus"
 	"time"
 
@@ -41,6 +42,16 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 	if !c.isInit {
 		logrus.Panicf("[OrderController] not Init")
 	}
+	if p.UserID == 0 {
+		logrus.Error("[CreateOrder] userID cannot be empty")
+		return nil, general_errors.BadRequest
+	}
+	// 获取用户信息
+	u, err := user.GetController().GetUserByUserID(p.UserID, nil, false)
+	if err != nil {
+		return nil, err
+	}
+
 	// 获取订单总额与库中物料进行比对
 	var totalPrice uint64 = 0
 	var goodsList = make([]CreateOrderGoodsModelParams, 0)
@@ -79,7 +90,8 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 		order = &databases.Order{
 			OrderID:        id,
 			UserID:         p.UserID,
-			RefererID:      p.RefererID,
+			NickName:       u.NickName,
+			UserOpenID:     u.OpenID,
 			TotalPrice:     p.TotalPrice,
 			DiscountAmount: p.DiscountAmount,
 			ActualAmount:   p.ActualAmount,
@@ -151,7 +163,7 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 		return c.eventHandler.OnOrderCreateEvent(db, order)
 	})
 
-	err := tx.Do()
+	err = tx.Do()
 	if err != nil {
 		logrus.Errorf("[CreateOrder] err: %v, params: %+v", err, p)
 		return nil, general_errors.InternalError
@@ -217,6 +229,20 @@ func (c Controller) GetOrders(p GetOrdersParams, withCount bool) (orders []datab
 		}
 	}
 	return
+}
+func (c Controller) GetOrderLogistics(orderID uint64) (*databases.OrderLogistics, error) {
+	logistics := &databases.OrderLogistics{
+		OrderID: orderID,
+	}
+	err := logistics.FetchByOrderID(c.db)
+	if err != nil {
+		if sqlx.DBErr(err).IsNotFound() {
+			return nil, general_errors.OrderNotFound
+		}
+		logrus.Errorf("[GetOrderLogistics] logistics.FetchByOrderID err: %v, orderID: %d", err, orderID)
+		return nil, general_errors.InternalError
+	}
+	return logistics, nil
 }
 
 func (c Controller) GetOrderGoods(orderID uint64) ([]databases.OrderGoods, error) {
@@ -345,7 +371,7 @@ func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.Ord
 	if db == nil {
 		db = c.db
 	}
-	if params.Status != enums.ORDER_STATUS_UNKNOWN {
+	if params.Status != enums.ORDER_STATUS_UNKNOWN && params.Status != enums.ORDER_STATUS__CLOSED {
 		if err := c.updateOrderStatus(db, order, params.Status); err != nil {
 			return err
 		}

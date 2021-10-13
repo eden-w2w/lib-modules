@@ -17,7 +17,7 @@ func init() {
 		"COMPLETE": "已完成",
 		"DISPATCH": "已发货",
 		"CONFIRM":  "待发货",
-		"PAID":     "已支付",
+		"PAID":     "待确认",
 		"CREATED":  "待支付",
 	})
 }
@@ -58,7 +58,7 @@ func ParseOrderStatusFromLabelString(s string) (OrderStatus, error) {
 		return ORDER_STATUS__DISPATCH, nil
 	case "待发货":
 		return ORDER_STATUS__CONFIRM, nil
-	case "已支付":
+	case "待确认":
 		return ORDER_STATUS__PAID, nil
 	case "待支付":
 		return ORDER_STATUS__CREATED, nil
@@ -77,7 +77,7 @@ func (OrderStatus) Enums() map[int][]string {
 		int(ORDER_STATUS__COMPLETE): {"COMPLETE", "已完成"},
 		int(ORDER_STATUS__DISPATCH): {"DISPATCH", "已发货"},
 		int(ORDER_STATUS__CONFIRM):  {"CONFIRM", "待发货"},
-		int(ORDER_STATUS__PAID):     {"PAID", "已支付"},
+		int(ORDER_STATUS__PAID):     {"PAID", "待确认"},
 		int(ORDER_STATUS__CREATED):  {"CREATED", "待支付"},
 	}
 }
@@ -119,7 +119,7 @@ func (v OrderStatus) Label() string {
 	case ORDER_STATUS__CONFIRM:
 		return "待发货"
 	case ORDER_STATUS__PAID:
-		return "已支付"
+		return "待确认"
 	case ORDER_STATUS__CREATED:
 		return "待支付"
 	}
