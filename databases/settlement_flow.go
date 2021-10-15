@@ -10,6 +10,7 @@ import (
 // @def primary ID
 // @def unique_index U_settlement_id SettlementID
 // @def unique_index U_interval UserID Name
+// @def index I_status Status
 type SettlementFlow struct {
 	datatypes.PrimaryID
 	// 结算单ID

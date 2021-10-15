@@ -54,20 +54,20 @@ func (c *Controller) Init(db sqlx.DBExecutor, config *SettlementConfig) {
 
 func (c Controller) TaskSettlement() {
 	_, week := time.Now().ISOWeek()
-	_ = c.RunTaskSettlement(fmt.Sprintf("%d周", week))
+	_ = c.RunTaskSettlement(fmt.Sprintf("第%d周", week))
 }
 
 func (c Controller) RunTaskSettlement(settlementName string) error {
 	logrus.Infof("[TaskSettlement] start settlement for %s", settlementName)
 	defer logrus.Infof("[TaskSettlement] complete settlement for %s", settlementName)
 
-	list, err := promotion_flow.GetController().GetPromotionFlows(promotion_flow.GetPromotionFlowParams{
-		IsNotSettlement: true,
+	list, _, err := promotion_flow.GetController().GetPromotionFlows(promotion_flow.GetPromotionFlowParams{
+		IsNotSettlement: datatypes.BOOL_TRUE,
 		CreateLt:        datatypes.MySQLTimestamp(time.Now().Add(-c.config.SettlementDuration)),
 		Pagination: modules.Pagination{
 			Size: -1,
 		},
-	})
+	}, false)
 
 	if err != nil {
 		logrus.Errorf("[TaskSettlement] promotion_flow.GetController().GetPromotionFlows err: %v", err)
@@ -136,31 +136,46 @@ func (c Controller) StopTask() {
 	}
 }
 
-func (c Controller) GetSettlementByUserIDAndName(userID uint64, name string, db sqlx.DBExecutor, forUpdate bool) (model *databases.SettlementFlow, err error) {
+func (c Controller) GetSettlementFlows(params GetSettlementFlowsParams, withCount bool) (data []databases.SettlementFlow, count int, err error) {
+	if !c.isInit {
+		logrus.Panicf("[SettlementFlowController] not Init")
+	}
+	model := &databases.SettlementFlow{}
+	data, err = model.List(c.db, params.Conditions(), params.Additions()...)
+	if err != nil {
+		logrus.Errorf("[GetSettlementFlows] model.List err: %v, params: %+v", err, params)
+		return nil, 0, general_errors.InternalError
+	}
+	if withCount {
+		count, err = model.Count(c.db, params.Conditions())
+		if err != nil {
+			logrus.Errorf("[GetSettlementFlows] model.Count err: %v, params: %+v", err, params)
+			return nil, 0, general_errors.InternalError
+		}
+	}
+	return
+}
+
+func (c Controller) GetSettlementByID(settlementID uint64, db sqlx.DBExecutor, forUpdate bool) (model *databases.SettlementFlow, err error) {
 	if !c.isInit {
 		logrus.Panicf("[SettlementFlowController] not Init")
 	}
 	if db == nil {
 		db = c.db
 	}
-	model = &databases.SettlementFlow{
-		UserID: userID,
-		Name:   name,
-	}
-
+	model = &databases.SettlementFlow{SettlementID: settlementID}
 	if forUpdate {
-		err = model.FetchByUserIDAndNameForUpdate(db)
+		err = model.FetchBySettlementIDForUpdate(db)
 	} else {
-		err = model.FetchByUserIDAndName(db)
+		err = model.FetchBySettlementID(db)
 	}
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return nil, general_errors.NotFound
+			return nil, general_errors.SettlementFlowNotFound
 		}
-		logrus.Errorf("[GetSettlementByUserIDAndName] err: %v, userID: %d, name: %s", err, userID, name)
-		return nil, err
+		logrus.Errorf("[GetSettlementByID] model.FetchBySettlementID err: %v, settlementID: %d, forUpdate: %v", err, settlementID, forUpdate)
+		return nil, general_errors.InternalError
 	}
-
 	return
 }
 
@@ -205,4 +220,32 @@ func (c Controller) CreateSettlement(params CreateSettlementParams, db sqlx.DBEx
 		return nil, err
 	}
 	return model, nil
+}
+
+func (c Controller) UpdateSettlement(model *databases.SettlementFlow, params UpdateSettlementParams, db sqlx.DBExecutor) error {
+	if !c.isInit {
+		logrus.Panicf("[SettlementFlowController] not Init")
+	}
+	if db == nil {
+		db = c.db
+	}
+
+	if params.TotalSales > 0 && model.TotalSales != params.TotalSales {
+		model.TotalSales = params.TotalSales
+	}
+	if params.Proportion > 0 && model.Proportion != params.Proportion {
+		model.Proportion = params.Proportion
+	}
+	if params.Amount > 0 && model.Amount != params.Amount {
+		model.Amount = params.Amount
+	}
+	if params.Status != enums.SETTLEMENT_STATUS_UNKNOWN && model.Status != params.Status {
+		model.Status = params.Status
+	}
+	err := model.UpdateBySettlementIDWithStruct(db)
+	if err != nil {
+		logrus.Errorf("[UpdateSettlement] model.UpdateBySettlementIDWithStruct err: %v, params: %+v", err, params)
+		return general_errors.InternalError
+	}
+	return nil
 }

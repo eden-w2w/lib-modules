@@ -54,7 +54,7 @@ func (c Controller) CreatePromotionFlow(params CreatePromotionFlowParams, db sql
 	return model, nil
 }
 
-func (c Controller) GetPromotionFlows(params GetPromotionFlowParams) (list []databases.PromotionFlow, err error) {
+func (c Controller) GetPromotionFlows(params GetPromotionFlowParams, withCount bool) (list []databases.PromotionFlow, count int, err error) {
 	if !c.isInit {
 		logrus.Panicf("[PromotionFlowController] not Init")
 	}
@@ -62,6 +62,15 @@ func (c Controller) GetPromotionFlows(params GetPromotionFlowParams) (list []dat
 	list, err = model.List(c.db, params.Conditions(), params.Additions()...)
 	if err != nil {
 		logrus.Errorf("[GetPromotionFlows] model.List err: %v, params: %+v", err, params)
+		return
+	}
+
+	if withCount {
+		count, err = model.Count(c.db, params.Conditions())
+		if err != nil {
+			logrus.Errorf("[GetPromotionFlows] model.Count err: %v, params: %+v", err, params)
+			return
+		}
 	}
 	return
 }

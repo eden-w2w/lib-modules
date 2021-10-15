@@ -3,7 +3,11 @@ package settlement_flow
 import (
 	"errors"
 	"fmt"
+	"github.com/eden-framework/sqlx/builder"
+	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/constants/enums"
+	"github.com/eden-w2w/lib-modules/databases"
+	"github.com/eden-w2w/lib-modules/modules"
 	"strconv"
 	"strings"
 	"time"
@@ -89,4 +93,68 @@ type CreateSettlementParams struct {
 	Proportion float64 `in:"body" json:"proportion"`
 	// 结算金额
 	Amount uint64 `in:"body" json:"amount"`
+}
+
+type GetSettlementFlowsParams struct {
+	// 用户ID
+	UserID uint64 `name:"userID,string" in:"query" default:""`
+	// 名称
+	Name string `name:"name" in:"query" default:""`
+	// 结算状态
+	Status enums.SettlementStatus `name:"status" in:"query" default:""`
+	// 创建时间大于等于
+	CreateGte datatypes.MySQLTimestamp `name:"createGte" in:"query" default:""`
+	// 创建时间小于
+	CreateLt datatypes.MySQLTimestamp `name:"createLt" in:"query" default:""`
+	modules.Pagination
+}
+
+func (p GetSettlementFlowsParams) Conditions() builder.SqlCondition {
+	var condition builder.SqlCondition
+	model := databases.SettlementFlow{}
+
+	if p.UserID != 0 {
+		condition = builder.And(condition, model.FieldUserID().Eq(p.UserID))
+	}
+	if p.Name != "" {
+		condition = builder.And(condition, model.FieldName().Eq(p.Name))
+	}
+	if p.Status != enums.SETTLEMENT_STATUS_UNKNOWN {
+		condition = builder.And(condition, model.FieldStatus().Eq(p.Status))
+	}
+	if p.CreateGte != datatypes.TimestampZero {
+		condition = builder.And(condition, model.FieldCreatedAt().Gte(p.CreateGte))
+	}
+	if p.CreateLt != datatypes.TimestampZero {
+		condition = builder.And(condition, model.FieldCreatedAt().Lt(p.CreateLt))
+	}
+
+	return condition
+}
+
+func (p GetSettlementFlowsParams) Additions() []builder.Addition {
+	var additions = make([]builder.Addition, 0)
+
+	if p.Size != 0 {
+		limit := builder.Limit(int64(p.Size))
+		if p.Offset != 0 {
+			limit.Offset(int64(p.Offset))
+		}
+		additions = append(additions, limit)
+	}
+
+	additions = append(additions, builder.OrderBy(builder.DescOrder((&databases.Order{}).FieldCreatedAt())))
+
+	return additions
+}
+
+type UpdateSettlementParams struct {
+	// 销售总额
+	TotalSales uint64 `json:"totalSales" default:""`
+	// 计算比例
+	Proportion float64 `json:"proportion" default:""`
+	// 结算金额
+	Amount uint64 `json:"amount" default:""`
+	// 结算状态
+	Status enums.SettlementStatus `json:"status" default:""`
 }

@@ -27,6 +27,8 @@ const (
 	PaymentFlowNotFound
 	// @errTalk 商品未找到
 	GoodsNotFound
+	// @errTalk 结算单未找到
+	SettlementFlowNotFound
 )
 
 const (

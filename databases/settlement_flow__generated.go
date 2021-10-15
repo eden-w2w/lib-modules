@@ -7,11 +7,20 @@ import (
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
+	github_com_eden_w2_w_lib_modules_constants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 func (SettlementFlow) PrimaryKey() []string {
 	return []string{
 		"ID",
+	}
+}
+
+func (SettlementFlow) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
+	return github_com_eden_framework_sqlx_builder.Indexes{
+		"I_status": []string{
+			"Status",
+		},
 	}
 }
 
@@ -217,6 +226,7 @@ func (m *SettlementFlow) IndexFieldNames() []string {
 		"ID",
 		"Name",
 		"SettlementID",
+		"Status",
 		"UserID",
 	}
 }
@@ -474,6 +484,133 @@ func (m *SettlementFlow) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExec
 
 }
 
+func (m *SettlementFlow) FetchBySettlementID(db github_com_eden_framework_sqlx.DBExecutor) error {
+
+	table := db.T(m)
+
+	err := db.QueryExprAndScan(
+		github_com_eden_framework_sqlx_builder.Select(nil).
+			From(
+				db.T(m),
+				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
+					table.F("SettlementID").Eq(m.SettlementID),
+					table.F("DeletedAt").Eq(m.DeletedAt),
+				)),
+				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.FetchBySettlementID"),
+			),
+		m,
+	)
+
+	return err
+}
+
+func (m *SettlementFlow) UpdateBySettlementIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
+
+	if _, ok := fieldValues["UpdatedAt"]; !ok {
+		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
+	}
+
+	table := db.T(m)
+
+	result, err := db.ExecExpr(
+		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
+			Where(
+				github_com_eden_framework_sqlx_builder.And(
+					table.F("SettlementID").Eq(m.SettlementID),
+					table.F("DeletedAt").Eq(m.DeletedAt),
+				),
+				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.UpdateBySettlementIDWithMap"),
+			).
+			Set(table.AssignmentsByFieldValues(fieldValues)...),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return m.FetchBySettlementID(db)
+	}
+
+	return nil
+
+}
+
+func (m *SettlementFlow) UpdateBySettlementIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
+
+	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
+	return m.UpdateBySettlementIDWithMap(db, fieldValues)
+
+}
+
+func (m *SettlementFlow) FetchBySettlementIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
+
+	table := db.T(m)
+
+	err := db.QueryExprAndScan(
+		github_com_eden_framework_sqlx_builder.Select(nil).
+			From(
+				db.T(m),
+				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
+					table.F("SettlementID").Eq(m.SettlementID),
+					table.F("DeletedAt").Eq(m.DeletedAt),
+				)),
+				github_com_eden_framework_sqlx_builder.ForUpdate(),
+				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.FetchBySettlementIDForUpdate"),
+			),
+		m,
+	)
+
+	return err
+}
+
+func (m *SettlementFlow) DeleteBySettlementID(db github_com_eden_framework_sqlx.DBExecutor) error {
+
+	table := db.T(m)
+
+	_, err := db.ExecExpr(
+		github_com_eden_framework_sqlx_builder.Delete().
+			From(db.T(m),
+				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
+					table.F("SettlementID").Eq(m.SettlementID),
+					table.F("DeletedAt").Eq(m.DeletedAt),
+				)),
+				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.DeleteBySettlementID"),
+			))
+
+	return err
+}
+
+func (m *SettlementFlow) SoftDeleteBySettlementID(db github_com_eden_framework_sqlx.DBExecutor) error {
+
+	table := db.T(m)
+
+	fieldValues := github_com_eden_framework_sqlx_builder.FieldValues{}
+	if _, ok := fieldValues["DeletedAt"]; !ok {
+		fieldValues["DeletedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
+	}
+
+	if _, ok := fieldValues["UpdatedAt"]; !ok {
+		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
+	}
+
+	_, err := db.ExecExpr(
+		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
+			Where(
+				github_com_eden_framework_sqlx_builder.And(
+					table.F("SettlementID").Eq(m.SettlementID),
+					table.F("DeletedAt").Eq(m.DeletedAt),
+				),
+				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.SoftDeleteBySettlementID"),
+			).
+			Set(table.AssignmentsByFieldValues(fieldValues)...),
+	)
+
+	return err
+
+}
+
 func (m *SettlementFlow) FetchByUserIDAndName(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
@@ -606,133 +743,6 @@ func (m *SettlementFlow) SoftDeleteByUserIDAndName(db github_com_eden_framework_
 
 }
 
-func (m *SettlementFlow) FetchBySettlementID(db github_com_eden_framework_sqlx.DBExecutor) error {
-
-	table := db.T(m)
-
-	err := db.QueryExprAndScan(
-		github_com_eden_framework_sqlx_builder.Select(nil).
-			From(
-				db.T(m),
-				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("SettlementID").Eq(m.SettlementID),
-					table.F("DeletedAt").Eq(m.DeletedAt),
-				)),
-				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.FetchBySettlementID"),
-			),
-		m,
-	)
-
-	return err
-}
-
-func (m *SettlementFlow) UpdateBySettlementIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
-
-	if _, ok := fieldValues["UpdatedAt"]; !ok {
-		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
-	}
-
-	table := db.T(m)
-
-	result, err := db.ExecExpr(
-		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
-			Where(
-				github_com_eden_framework_sqlx_builder.And(
-					table.F("SettlementID").Eq(m.SettlementID),
-					table.F("DeletedAt").Eq(m.DeletedAt),
-				),
-				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.UpdateBySettlementIDWithMap"),
-			).
-			Set(table.AssignmentsByFieldValues(fieldValues)...),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		return m.FetchBySettlementID(db)
-	}
-
-	return nil
-
-}
-
-func (m *SettlementFlow) UpdateBySettlementIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
-
-	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
-	return m.UpdateBySettlementIDWithMap(db, fieldValues)
-
-}
-
-func (m *SettlementFlow) FetchBySettlementIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
-
-	table := db.T(m)
-
-	err := db.QueryExprAndScan(
-		github_com_eden_framework_sqlx_builder.Select(nil).
-			From(
-				db.T(m),
-				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("SettlementID").Eq(m.SettlementID),
-					table.F("DeletedAt").Eq(m.DeletedAt),
-				)),
-				github_com_eden_framework_sqlx_builder.ForUpdate(),
-				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.FetchBySettlementIDForUpdate"),
-			),
-		m,
-	)
-
-	return err
-}
-
-func (m *SettlementFlow) DeleteBySettlementID(db github_com_eden_framework_sqlx.DBExecutor) error {
-
-	table := db.T(m)
-
-	_, err := db.ExecExpr(
-		github_com_eden_framework_sqlx_builder.Delete().
-			From(db.T(m),
-				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("SettlementID").Eq(m.SettlementID),
-					table.F("DeletedAt").Eq(m.DeletedAt),
-				)),
-				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.DeleteBySettlementID"),
-			))
-
-	return err
-}
-
-func (m *SettlementFlow) SoftDeleteBySettlementID(db github_com_eden_framework_sqlx.DBExecutor) error {
-
-	table := db.T(m)
-
-	fieldValues := github_com_eden_framework_sqlx_builder.FieldValues{}
-	if _, ok := fieldValues["DeletedAt"]; !ok {
-		fieldValues["DeletedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
-	}
-
-	if _, ok := fieldValues["UpdatedAt"]; !ok {
-		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
-	}
-
-	_, err := db.ExecExpr(
-		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
-			Where(
-				github_com_eden_framework_sqlx_builder.And(
-					table.F("SettlementID").Eq(m.SettlementID),
-					table.F("DeletedAt").Eq(m.DeletedAt),
-				),
-				github_com_eden_framework_sqlx_builder.Comment("SettlementFlow.SoftDeleteBySettlementID"),
-			).
-			Set(table.AssignmentsByFieldValues(fieldValues)...),
-	)
-
-	return err
-
-}
-
 func (m *SettlementFlow) List(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) ([]SettlementFlow, error) {
 
 	list := make([]SettlementFlow, 0)
@@ -828,6 +838,20 @@ func (m *SettlementFlow) BatchFetchBySettlementIDList(db github_com_eden_framewo
 	table := db.T(m)
 
 	condition := table.F("SettlementID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *SettlementFlow) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.SettlementStatus) ([]SettlementFlow, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("Status").In(values)
 
 	return m.List(db, condition)
 

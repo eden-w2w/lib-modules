@@ -28,19 +28,19 @@ type CreatePromotionFlowParams struct {
 
 type GetPromotionFlowParams struct {
 	// 获得奖励的用户ID
-	UserID uint64 `name:"userID,string" in:"query"`
+	UserID uint64 `name:"userID,string" in:"query" default:""`
 	// 奖励来源用户ID
-	RefererID uint64 `name:"refererID,string" in:"query"`
+	RefererID uint64 `name:"refererID,string" in:"query" default:""`
 	// 关联的支付流水
-	PaymentFlowID uint64 `name:"paymentFlowID,string" in:"query"`
+	PaymentFlowID uint64 `name:"paymentFlowID,string" in:"query" default:""`
 	// 关联的结算单ID
-	SettlementID uint64 `name:"settlementID,string" in:"query"`
+	SettlementID uint64 `name:"settlementID,string" in:"query" default:""`
 	// 是否只查询未结算的流水
-	IsNotSettlement bool `name:"isNotSettlement" in:"query"`
+	IsNotSettlement datatypes.Bool `name:"isNotSettlement" in:"query" default:""`
 	// 创建时间大于等于
-	CreateGte datatypes.MySQLTimestamp `name:"createGte" in:"query"`
+	CreateGte datatypes.MySQLTimestamp `name:"createGte" in:"query" default:""`
 	// 创建时间小于
-	CreateLt datatypes.MySQLTimestamp `name:"createLt" in:"query"`
+	CreateLt datatypes.MySQLTimestamp `name:"createLt" in:"query" default:""`
 	modules.Pagination
 }
 
@@ -62,13 +62,15 @@ func (p GetPromotionFlowParams) Conditions() builder.SqlCondition {
 	if p.CreateLt != datatypes.TimestampZero {
 		condition = builder.And(condition, model.FieldCreatedAt().Lt(p.CreateLt))
 	}
-	if p.IsNotSettlement {
-		condition = builder.And(condition, model.FieldSettlementID().Eq(0))
-	} else {
-		if p.SettlementID != 0 {
-			condition = builder.And(condition, model.FieldSettlementID().Eq(p.SettlementID))
+	if p.IsNotSettlement != datatypes.BOOL_UNKNOWN {
+		if p.IsNotSettlement == datatypes.BOOL_TRUE {
+			condition = builder.And(condition, model.FieldSettlementID().Eq(0))
 		} else {
-			condition = builder.And(condition, model.FieldSettlementID().Neq(0))
+			if p.SettlementID != 0 {
+				condition = builder.And(condition, model.FieldSettlementID().Eq(p.SettlementID))
+			} else {
+				condition = builder.And(condition, model.FieldSettlementID().Neq(0))
+			}
 		}
 	}
 	return condition
