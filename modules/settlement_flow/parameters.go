@@ -43,7 +43,7 @@ func (c SettlementConfig) GetProportion(sales uint64) float64 {
 }
 
 func (s *SettlementRule) UnmarshalText(text []byte) (err error) {
-	strList := strings.Split(string(text), "|")
+	strList := strings.Split(strings.Trim(string(text), " "), "|")
 	if len(strList) != 3 {
 		return errors.New("SettlementRule not support more than 3 args")
 	}

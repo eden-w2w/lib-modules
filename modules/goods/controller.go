@@ -45,6 +45,7 @@ func (c Controller) GetGoods(p GetGoodsParams) ([]databases.Goods, error) {
 	if !c.isInit {
 		logrus.Panicf("[GoodsController] not Init")
 	}
+
 	m := databases.Goods{}
 	goods, err := m.List(c.db, p.Conditions(c.db), p.Additions()...)
 	if err != nil {
@@ -58,6 +59,7 @@ func (c Controller) GetGoodsByID(goodsID uint64) (*databases.Goods, error) {
 	if !c.isInit {
 		logrus.Panicf("[GoodsController] not Init")
 	}
+
 	m := &databases.Goods{GoodsID: goodsID}
 	err := m.FetchByGoodsID(c.db)
 	if err != nil {
@@ -74,6 +76,7 @@ func (c Controller) LockInventory(db sqlx.DBExecutor, goodsID uint64, amount uin
 	if !c.isInit {
 		logrus.Panicf("[GoodsController] not Init")
 	}
+
 	if locker, ok := c.managers[goodsID]; ok {
 		locker.Lock()
 		defer locker.Unlock()
@@ -106,6 +109,7 @@ func (c Controller) UnlockInventory(db sqlx.DBExecutor, goodsID uint64, amount u
 	if !c.isInit {
 		logrus.Panicf("[GoodsController] not Init")
 	}
+
 	if locker, ok := c.managers[goodsID]; ok {
 		locker.Lock()
 		defer locker.Unlock()
@@ -135,6 +139,10 @@ func (c Controller) UnlockInventory(db sqlx.DBExecutor, goodsID uint64, amount u
 }
 
 func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams) error {
+	if !c.isInit {
+		logrus.Panicf("[GoodsController] not Init")
+	}
+
 	model := &databases.Goods{GoodsID: goodsID}
 	if params.Name != "" {
 		model.Name = params.Name
@@ -178,4 +186,43 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams) error 
 		return general_errors.InternalError
 	}
 	return nil
+}
+
+func (c Controller) CreateGoods(params CreateGoodsParams) (*databases.Goods, error) {
+	if !c.isInit {
+		logrus.Panicf("[GoodsController] not Init")
+	}
+
+	model := &databases.Goods{
+		Name:           params.Name,
+		Comment:        params.Comment,
+		DispatchAddr:   params.DispatchAddr,
+		Sales:          params.Sales,
+		MainPicture:    params.MainPicture,
+		Pictures:       params.Pictures,
+		Specifications: params.Specifications,
+		Activities:     params.Activities,
+		LogisticPolicy: params.LogisticPolicy,
+		Price:          params.Price,
+		Inventory:      params.Inventory,
+		Detail:         params.Detail,
+	}
+	id, err := model.MaxGoodsID(c.db, nil)
+	if err != nil {
+		logrus.Errorf("[CreateGoods] model.MaxGoodsID err: %v, params: %+v", err, params)
+		return nil, general_errors.InternalError
+	}
+	if id == 0 {
+		id = 10001
+	} else {
+		id++
+	}
+	model.GoodsID = id
+
+	err = model.Create(c.db)
+	if err != nil {
+		logrus.Errorf("[CreateGoods] model.Create err: %v, params: %+v", err, params)
+		return nil, general_errors.InternalError
+	}
+	return model, nil
 }
