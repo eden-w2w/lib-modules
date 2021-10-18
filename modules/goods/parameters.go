@@ -46,7 +46,7 @@ type CreateGoodsParams struct {
 	// 规格
 	Specifications []string `json:"specifications" in:"body"`
 	// 活动
-	Activities []string `json:"activities" default:"[]" in:"body"`
+	Activities []string `json:"activities" default:"" in:"body"`
 	// 物流政策
 	LogisticPolicy string `json:"logisticPolicy" default:"" in:"body"`
 	// 价格

@@ -24,6 +24,10 @@ func (v JsonArrayString) Value() (driver.Value, error) {
 
 func (v *JsonArrayString) Scan(src interface{}) error {
 	if data, ok := src.([]byte); ok {
+		if len(data) == 0 {
+			*v = JsonArrayString{}
+			return nil
+		}
 		return json.Unmarshal(data, v)
 	}
 	return nil

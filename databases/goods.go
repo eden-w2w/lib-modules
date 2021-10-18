@@ -1,6 +1,7 @@
 package databases
 
 import (
+	"database/sql"
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
@@ -30,7 +31,7 @@ type Goods struct {
 	// 规格
 	Specifications types.JsonArrayString `json:"specifications" db:"f_specification,size=1024"`
 	// 活动
-	Activities types.JsonArrayString `json:"activities" db:"f_activities"`
+	Activities types.JsonArrayString `json:"activities" db:"f_activities,null"`
 	// 物流政策
 	LogisticPolicy string `json:"logisticPolicy" db:"f_logistic_policy,size=512,default=''"`
 	// 价格
@@ -45,6 +46,8 @@ type Goods struct {
 
 func (m *Goods) MaxGoodsID(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) (maxID uint64, err error) {
 	table := db.T(m)
+
+	id := sql.NullInt64{}
 
 	condition = github_com_eden_framework_sqlx_builder.And(condition, m.FieldDeletedAt().Eq(0))
 	finalAdditions := []github_com_eden_framework_sqlx_builder.Addition{
@@ -61,9 +64,9 @@ func (m *Goods) MaxGoodsID(db github_com_eden_framework_sqlx.DBExecutor, conditi
 			github_com_eden_framework_sqlx_builder.Max(m.FieldGoodsID()),
 		).
 			From(table, finalAdditions...),
-		&maxID,
+		&id,
 	)
 
-	return maxID, err
+	return uint64(id.Int64), err
 
 }
