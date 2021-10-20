@@ -82,3 +82,22 @@ func (c Controller) UpdateTaskFlow(id uint64, params UpdateTaskParams) error {
 	}
 	return err
 }
+
+func (c Controller) GetTaskFlows(params GetTaskParams, withCount bool) (data []databases.TaskFlow, total int, err error) {
+	model := &databases.TaskFlow{}
+	data, err = model.List(c.db, params.Conditions(), params.Additions()...)
+	if err != nil {
+		logrus.Errorf("[GetTaskFlows] model.List err: %v, params: %+v", err, params)
+		return nil, 0, general_errors.InternalError
+	}
+
+	if withCount {
+		total, err = model.Count(c.db, params.Conditions())
+		if err != nil {
+			logrus.Errorf("[GetTaskFlows] model.Count err: %v, params: %+v", err, params)
+			return nil, 0, general_errors.InternalError
+		}
+	}
+
+	return
+}
