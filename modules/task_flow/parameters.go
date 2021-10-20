@@ -30,7 +30,7 @@ type GetTaskParams struct {
 	// 开始时间小于
 	StartTimeLt datatypes.MySQLTimestamp `name:"startTimeLt" in:"query" default:""`
 	// 任务执行状态
-	Status enums.TaskProcessStatus `json:"status" default:""`
+	Status enums.TaskProcessStatus `json:"status" in:"query" default:""`
 	modules.Pagination
 }
 
