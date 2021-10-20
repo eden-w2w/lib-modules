@@ -10,6 +10,7 @@ import (
 	"github.com/eden-w2w/lib-modules/modules"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
+	"github.com/eden-w2w/lib-modules/modules/task_flow"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -53,13 +54,39 @@ func (c *Controller) Init(db sqlx.DBExecutor, config *SettlementConfig) {
 }
 
 func (c Controller) TaskSettlement() {
+	if !c.isInit {
+		logrus.Panicf("[SettlementFlowController] not Init")
+	}
+
 	_, week := time.Now().ISOWeek()
 	_ = c.RunTaskSettlement(fmt.Sprintf("第%d周", week))
 }
 
-func (c Controller) RunTaskSettlement(settlementName string) error {
+func (c Controller) RunTaskSettlement(settlementName string) (err error) {
+	if !c.isInit {
+		logrus.Panicf("[SettlementFlowController] not Init")
+	}
+
 	logrus.Infof("[TaskSettlement] start settlement for %s", settlementName)
-	defer logrus.Infof("[TaskSettlement] complete settlement for %s", settlementName)
+	task, _ := task_flow.GetController().CreateTaskFlow(task_flow.CreateTaskFlowParams{Name: settlementName}, nil)
+	defer func() {
+		if task != nil {
+			if err != nil {
+				_ = task_flow.GetController().UpdateTaskFlow(task.FlowID, task_flow.UpdateTaskParams{
+					EndedAt: datatypes.MySQLTimestamp(time.Now()),
+					Status:  enums.TASK_PROCESS_STATUS__FAIL,
+					Message: err.Error(),
+				})
+			} else {
+				_ = task_flow.GetController().UpdateTaskFlow(task.FlowID, task_flow.UpdateTaskParams{
+					EndedAt: datatypes.MySQLTimestamp(time.Now()),
+					Status:  enums.TASK_PROCESS_STATUS__COMPLETE,
+				})
+			}
+		}
+
+		logrus.Infof("[TaskSettlement] complete settlement for %s", settlementName)
+	}()
 
 	list, _, err := promotion_flow.GetController().GetPromotionFlows(promotion_flow.GetPromotionFlowParams{
 		IsNotSettlement: datatypes.BOOL_TRUE,
@@ -71,7 +98,7 @@ func (c Controller) RunTaskSettlement(settlementName string) error {
 
 	if err != nil {
 		logrus.Errorf("[TaskSettlement] promotion_flow.GetController().GetPromotionFlows err: %v", err)
-		return err
+		return
 	}
 
 	var settlements = make(map[uint64]settlementPromotionMapping)
@@ -115,7 +142,8 @@ func (c Controller) RunTaskSettlement(settlementName string) error {
 		return nil
 	})
 
-	return tx.Do()
+	err = tx.Do()
+	return
 }
 
 func (c Controller) StartTask() {
