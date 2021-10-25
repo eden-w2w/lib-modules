@@ -188,4 +188,6 @@ type UpdateOrderParams struct {
 	CourierCompany string `json:"courierCompany" default:""`
 	// 快递单号
 	CourierNumber string `json:"courierNumber" default:""`
+	// 物料信息
+	Goods []CreateOrderGoodsParams `json:"goods" default:""`
 }

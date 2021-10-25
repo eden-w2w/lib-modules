@@ -7,6 +7,7 @@ import (
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
 	"github.com/eden-w2w/lib-modules/modules/user"
+	"github.com/eden-w2w/lib-modules/pkg/search"
 	"github.com/sirupsen/logrus"
 	"time"
 
@@ -60,7 +61,7 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 		err := goods.FetchByGoodsID(c.db)
 		if err != nil {
 			logrus.Errorf("[CreateOrder] goods.FetchByGoodsID(c.db) err: %v, goodsID: %d", err, g.GoodsID)
-			return nil, general_errors.NotFound.StatusError().WithDesc("商品无法找到")
+			return nil, general_errors.GoodsNotFound
 		}
 		totalPrice += goods.Price * uint64(g.Amount)
 		goodsList = append(goodsList, CreateOrderGoodsModelParams{
@@ -364,7 +365,135 @@ func (c Controller) updateOrderRemark(db sqlx.DBExecutor, order *databases.Order
 	return nil
 }
 
-func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.OrderLogistics, params UpdateOrderParams, db sqlx.DBExecutor) (err error) {
+func (c Controller) updateOrderGoods(db sqlx.DBExecutor, order *databases.Order, goods []databases.OrderGoods, params []CreateOrderGoodsParams, locker InventoryLock, unlocker InventoryUnlock) error {
+	type modifiedGoodsParams struct {
+		databases.OrderGoods
+		modifiedAmount int32
+	}
+
+	var deleteGoods = make([]databases.OrderGoods, 0)
+	var newGoods = make([]CreateOrderGoodsParams, 0)
+	var modifiedGoods = make([]modifiedGoodsParams, 0)
+
+	for _, g := range goods {
+		ok, i, err := search.In(params, g.GoodsID, func(current interface{}, needle interface{}) bool {
+			var p = current.(CreateOrderGoodsParams)
+			if p.GoodsID == needle {
+				return true
+			}
+			return false
+		})
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] search.In params err: %v", err)
+			return err
+		}
+		if ok {
+			if g.Amount != params[i].Amount {
+				g.Amount = params[i].Amount
+				modifiedGoods = append(modifiedGoods, modifiedGoodsParams{
+					g,
+					int32(params[i].Amount) - int32(g.Amount),
+				})
+			}
+		} else {
+			deleteGoods = append(deleteGoods, g)
+		}
+	}
+
+	for _, param := range params {
+		ok, _, err := search.In(goods, param.GoodsID, func(current interface{}, needle interface{}) bool {
+			var g = current.(databases.OrderGoods)
+			if g.GoodsID == needle {
+				return true
+			}
+			return false
+		})
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] search.In goods err: %v", err)
+			return err
+		}
+		if !ok {
+			newGoods = append(newGoods, param)
+		}
+	}
+
+	for _, g := range modifiedGoods {
+		err := g.OrderGoods.UpdateByOrderIDAndGoodsIDWithStruct(db)
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] g.UpdateByOrderIDAndGoodsIDWithStruct err: %v", err)
+			return err
+		}
+		if g.modifiedAmount < 0 {
+			err = unlocker(db, g.GoodsID, uint32(-g.modifiedAmount))
+			if err != nil {
+				logrus.Errorf("[updateOrderGoods] unlocker err: %v, goodsID: %d, unlockAmount: %d", err, g.GoodsID, -g.modifiedAmount)
+				return err
+			}
+		} else {
+			err = locker(db, g.GoodsID, uint32(g.modifiedAmount))
+			if err != nil {
+				logrus.Errorf("[updateOrderGoods] locker err: %v, goodsID: %d, lockAmount: %d", err, g.GoodsID, g.modifiedAmount)
+				return err
+			}
+		}
+	}
+	for _, g := range deleteGoods {
+		// 释放库存
+		err := unlocker(db, g.GoodsID, g.Amount)
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] unlocker err: %v", err)
+			return err
+		}
+
+		err = g.DeleteByOrderIDAndGoodsID(db)
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] g.DeleteByOrderIDAndGoodsID err: %v", err)
+			return err
+		}
+	}
+	for _, g := range newGoods {
+		model := databases.Goods{GoodsID: g.GoodsID}
+		err := model.FetchByGoodsIDForUpdate(c.db)
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] model.FetchByGoodsID(c.db) err: %v, goodsID: %d", err, g.GoodsID)
+			return general_errors.GoodsNotFound
+		}
+
+		// 锁定库存
+		err = locker(db, g.GoodsID, g.Amount)
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] locker err: %v, goodsID: %d", err, g.GoodsID)
+			return err
+		}
+
+		// 创建物料
+		orderGoods := &databases.OrderGoods{
+			OrderID:        order.OrderID,
+			GoodsID:        model.GoodsID,
+			Name:           model.Name,
+			Comment:        model.Comment,
+			DispatchAddr:   model.DispatchAddr,
+			Sales:          model.Sales,
+			MainPicture:    model.MainPicture,
+			Pictures:       model.Pictures,
+			Specifications: model.Specifications,
+			Activities:     model.Activities,
+			LogisticPolicy: model.LogisticPolicy,
+			Price:          model.Price,
+			Inventory:      model.Inventory,
+			Detail:         model.Detail,
+			Amount:         g.Amount,
+		}
+		err = orderGoods.Create(db)
+		if err != nil {
+			logrus.Errorf("[updateOrderGoods] orderGoods.Create err: %v, orderGoods: %+v", err, orderGoods)
+			return err
+		}
+	}
+	return nil
+}
+
+func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.OrderLogistics, orderGoods []databases.OrderGoods, params UpdateOrderParams, locker InventoryLock, unlocker InventoryUnlock, db sqlx.DBExecutor) (err error) {
 	if !c.isInit {
 		logrus.Panicf("[OrderController] not Init")
 	}
@@ -395,6 +524,12 @@ func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.Ord
 
 	if params.Remark != "" {
 		if err = c.updateOrderRemark(db, order, params.Remark); err != nil {
+			return err
+		}
+	}
+
+	if len(params.Goods) > 0 {
+		if err = c.updateOrderGoods(db, order, orderGoods, params.Goods, locker, unlocker); err != nil {
 			return err
 		}
 	}
