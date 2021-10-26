@@ -246,12 +246,15 @@ func (c Controller) GetOrderLogistics(orderID uint64) (*databases.OrderLogistics
 	return logistics, nil
 }
 
-func (c Controller) GetOrderGoods(orderID uint64) ([]databases.OrderGoods, error) {
+func (c Controller) GetOrderGoods(orderID uint64, db sqlx.DBExecutor) ([]databases.OrderGoods, error) {
 	if !c.isInit {
 		logrus.Panicf("[OrderController] not Init")
 	}
+	if db == nil {
+		db = c.db
+	}
 	og := databases.OrderGoods{}
-	goods, err := og.BatchFetchByOrderIDList(c.db, []uint64{orderID})
+	goods, err := og.BatchFetchByOrderIDList(db, []uint64{orderID})
 	if err != nil {
 		logrus.Errorf("[GetOrderGoods] og.BatchFetchByOrderIDList err: %v, orderID: %d", err, orderID)
 		return nil, general_errors.InternalError
@@ -295,6 +298,7 @@ func (c Controller) updateOrderDiscount(db sqlx.DBExecutor, order *databases.Ord
 		return general_errors.DiscountAmountOverflow
 	}
 
+	order.DiscountAmount = discountAmount
 	order.ActualAmount = order.TotalPrice - discountAmount
 	f := builder.FieldValues{
 		"DiscountAmount": discountAmount,
@@ -366,6 +370,10 @@ func (c Controller) updateOrderRemark(db sqlx.DBExecutor, order *databases.Order
 }
 
 func (c Controller) updateOrderGoods(db sqlx.DBExecutor, order *databases.Order, goods []databases.OrderGoods, params []CreateOrderGoodsParams, locker InventoryLock, unlocker InventoryUnlock) error {
+	if order.Status != enums.ORDER_STATUS__CREATED {
+		return general_errors.NotAllowedChangeAmount
+	}
+
 	type modifiedGoodsParams struct {
 		databases.OrderGoods
 		modifiedAmount int32
@@ -389,10 +397,11 @@ func (c Controller) updateOrderGoods(db sqlx.DBExecutor, order *databases.Order,
 		}
 		if ok {
 			if g.Amount != params[i].Amount {
+				offset := int32(params[i].Amount) - int32(g.Amount)
 				g.Amount = params[i].Amount
 				modifiedGoods = append(modifiedGoods, modifiedGoodsParams{
 					g,
-					int32(params[i].Amount) - int32(g.Amount),
+					offset,
 				})
 			}
 		} else {
@@ -490,6 +499,29 @@ func (c Controller) updateOrderGoods(db sqlx.DBExecutor, order *databases.Order,
 			return err
 		}
 	}
+
+	// 重新计算订单价格
+	goodsList, err := c.GetOrderGoods(order.OrderID, db)
+	if err != nil {
+		logrus.Errorf("[updateOrderGoods] GetOrderGoods err: %v, orderID: %d", err, order.OrderID)
+		return err
+	}
+
+	var totalPrice uint64 = 0
+	for _, g := range goodsList {
+		totalPrice += g.Price * uint64(g.Amount)
+	}
+	order.TotalPrice = totalPrice
+	order.ActualAmount = order.TotalPrice - order.DiscountAmount
+	f := builder.FieldValues{
+		"TotalPrice":   totalPrice,
+		"ActualAmount": order.ActualAmount,
+	}
+	err = order.UpdateByIDWithMap(db, f)
+	if err != nil {
+		logrus.Errorf("[updateOrderGoods] order.UpdateByIDWithMap err: %v, orderID: %d, fields: %+v", err, order.OrderID, f)
+		return general_errors.InternalError
+	}
 	return nil
 }
 
@@ -500,6 +532,7 @@ func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.Ord
 	if db == nil {
 		db = c.db
 	}
+	orderStatus := order.Status
 	if params.Status != enums.ORDER_STATUS_UNKNOWN && params.Status != enums.ORDER_STATUS__CLOSED {
 		if err = c.updateOrderStatus(db, order, params.Status); err != nil {
 			return err
@@ -534,17 +567,19 @@ func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.Ord
 		}
 	}
 
-	// 执行状态变更事件
-	switch order.Status {
-	case enums.ORDER_STATUS__PAID:
-		// 获取支付流水
-		flow, err := payment_flow.GetController().GetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
-		if err != nil {
-			return err
+	if orderStatus != order.Status {
+		// 状态发生变更，执行状态变更事件
+		switch order.Status {
+		case enums.ORDER_STATUS__PAID:
+			// 获取支付流水
+			flow, err := payment_flow.GetController().GetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
+			if err != nil {
+				return err
+			}
+			err = c.eventHandler.OnOrderPaidEvent(db, order, flow)
+		case enums.ORDER_STATUS__COMPLETE:
+			err = c.eventHandler.OnOrderCompleteEvent(db, order)
 		}
-		err = c.eventHandler.OnOrderPaidEvent(db, order, flow)
-	case enums.ORDER_STATUS__COMPLETE:
-		err = c.eventHandler.OnOrderCompleteEvent(db, order)
 	}
 
 	return err
@@ -574,7 +609,7 @@ func (c Controller) CancelOrder(orderID, userID uint64, unlocker InventoryUnlock
 	})
 
 	tx = tx.With(func(db sqlx.DBExecutor) error {
-		goods, err := c.GetOrderGoods(orderID)
+		goods, err := c.GetOrderGoods(orderID, db)
 		if err != nil {
 			return err
 		}

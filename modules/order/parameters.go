@@ -107,6 +107,8 @@ type GoodsListResponse struct {
 	MainPicture string `json:"mainPicture"`
 	// 规格
 	Specifications types.JsonArrayString `json:"specifications"`
+	// 活动
+	Activities types.JsonArrayString `json:"activities"`
 	// 价格
 	Price uint64 `json:"price"`
 	// 数量

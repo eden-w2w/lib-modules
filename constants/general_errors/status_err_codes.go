@@ -56,7 +56,7 @@ const (
 	Forbidden status_error.StatusErrorCode = http.StatusForbidden*1e6 + ServiceStatusErrorCode + iota
 	// @errTalk 订单不可重复取消
 	OrderCanceled
-	// @errTalk 订单已支付不允许变更折扣金额
+	// @errTalk 订单已支付不允许变更金额
 	NotAllowedChangeAmount
 	// @errTalk 订单状态不允许变更收件信息
 	NotAllowedChangeLogistics
