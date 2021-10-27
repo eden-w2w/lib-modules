@@ -11,7 +11,7 @@ import (
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
 	"github.com/eden-w2w/lib-modules/modules/task_flow"
-	"github.com/robfig/cron/v3"
+	"github.com/eden-w2w/lib-modules/pkg/cron"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -29,7 +29,6 @@ type Controller struct {
 	isInit bool
 	db     sqlx.DBExecutor
 	config *SettlementConfig
-	task   *cron.Cron
 }
 
 type settlementPromotionMapping struct {
@@ -41,11 +40,8 @@ func (c *Controller) Init(db sqlx.DBExecutor, config *SettlementConfig) {
 	c.db = db
 
 	if config != nil {
-		parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-		t := cron.New(cron.WithParser(parser))
 		c.config = config
-		c.task = t
-		_, err := t.AddFunc(config.ToSettlementCronRule(), controller.TaskSettlement)
+		_, err := cron.GetManager().AddFunc(config.ToSettlementCronRule(), c.TaskSettlement)
 		if err != nil {
 			logrus.Panicf("[settlement_flow.newController] t.AddFunc err: %v, rules: %s", err, config.ToSettlementCronRule())
 		}
@@ -53,16 +49,12 @@ func (c *Controller) Init(db sqlx.DBExecutor, config *SettlementConfig) {
 	c.isInit = true
 }
 
-func (c Controller) TaskSettlement() {
-	if !c.isInit {
-		logrus.Panicf("[SettlementFlowController] not Init")
-	}
-
+func (c *Controller) TaskSettlement() {
 	_, week := time.Now().ISOWeek()
 	_ = c.RunTaskSettlement(fmt.Sprintf("第%d周", week))
 }
 
-func (c Controller) RunTaskSettlement(settlementName string) (err error) {
+func (c *Controller) RunTaskSettlement(settlementName string) (err error) {
 	if !c.isInit {
 		logrus.Panicf("[SettlementFlowController] not Init")
 	}
@@ -144,24 +136,6 @@ func (c Controller) RunTaskSettlement(settlementName string) (err error) {
 
 	err = tx.Do()
 	return
-}
-
-func (c Controller) StartTask() {
-	if !c.isInit {
-		logrus.Panicf("[SettlementFlowController] not Init")
-	}
-	if c.task != nil {
-		c.task.Start()
-	}
-}
-
-func (c Controller) StopTask() {
-	if !c.isInit {
-		logrus.Panicf("[SettlementFlowController] not Init")
-	}
-	if c.task != nil {
-		c.task.Stop()
-	}
 }
 
 func (c Controller) GetSettlementFlows(params GetSettlementFlowsParams, withCount bool) (data []databases.SettlementFlow, count int, err error) {
