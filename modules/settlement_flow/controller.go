@@ -43,7 +43,7 @@ func (c *Controller) Init(db sqlx.DBExecutor, config *SettlementConfig) {
 		c.config = config
 		_, err := cron.GetManager().AddFunc(config.ToSettlementCronRule(), c.TaskSettlement)
 		if err != nil {
-			logrus.Panicf("[settlement_flow.newController] t.AddFunc err: %v, rules: %s", err, config.ToSettlementCronRule())
+			logrus.Panicf("[settlement_flow.Init] t.AddFunc err: %v, rules: %s", err, config.ToSettlementCronRule())
 		}
 	}
 	c.isInit = true

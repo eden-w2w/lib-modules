@@ -19,6 +19,7 @@ func (Order) PrimaryKey() []string {
 func (Order) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
 	return github_com_eden_framework_sqlx_builder.Indexes{
 		"I_expire": []string{
+			"Status",
 			"ExpiredAt",
 		},
 		"I_index": []string{

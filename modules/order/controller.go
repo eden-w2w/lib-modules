@@ -7,6 +7,7 @@ import (
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
 	"github.com/eden-w2w/lib-modules/modules/user"
+	"github.com/eden-w2w/lib-modules/pkg/cron"
 	"github.com/eden-w2w/lib-modules/pkg/search"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -29,14 +30,49 @@ type Controller struct {
 	isInit              bool
 	db                  sqlx.DBExecutor
 	orderExpireDuration time.Duration
+	taskRule            string
 	eventHandler        EventHandler
 }
 
-func (c *Controller) Init(db sqlx.DBExecutor, d time.Duration, h EventHandler) {
+func (c *Controller) Init(db sqlx.DBExecutor, d time.Duration, rule string, unlocker InventoryUnlock, h EventHandler) {
 	c.db = db
 	c.orderExpireDuration = d
+	c.taskRule = rule
 	c.eventHandler = h
 	c.isInit = true
+
+	_, err := cron.GetManager().AddFunc(c.taskRule, c.taskCancelExpiredOrders(unlocker))
+	if err != nil {
+		logrus.Panicf("[order.Init] t.AddFunc err: %v, rules: %s", err, c.taskRule)
+	}
+}
+
+func (c *Controller) taskCancelExpiredOrders(unlocker InventoryUnlock) func() {
+	if !c.isInit {
+		logrus.Panicf("[OrderController] not Init")
+	}
+
+	return func() {
+		currentTime := datatypes.MySQLTimestamp(time.Now())
+		logrus.Infof("[TaskCancelExpiredOrders] start cancel expired orders for %s", currentTime.String())
+		defer logrus.Infof("[TaskCancelExpiredOrders] complete cancel expired orders for %s", currentTime.String())
+
+		model := &databases.Order{}
+		condition := model.FieldStatus().Eq(enums.ORDER_STATUS__CREATED)
+		condition = builder.And(condition, model.FieldExpiredAt().Lte(currentTime))
+		orders, err := model.List(c.db, condition, builder.OrderBy(builder.AscOrder(model.FieldExpiredAt())))
+		if err != nil {
+			logrus.Errorf("[TaskCancelExpiredOrders] model.List err: %v", err)
+			return
+		}
+
+		for _, order := range orders {
+			err := c.CancelOrder(order.OrderID, 0, unlocker)
+			if err != nil {
+				logrus.Errorf("[TaskCancelExpiredOrders] c.CancelOrder err: %v, orderID: %d", err, order.OrderID)
+			}
+		}
+	}
 }
 
 func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*databases.Order, error) {

@@ -10,7 +10,7 @@ import (
 // @def primary ID
 // @def unique_index U_order_id OrderID
 // @def index I_index UserID Status
-// @def index I_expire ExpiredAt
+// @def index I_expire Status ExpiredAt
 type Order struct {
 	datatypes.PrimaryID
 	// 业务ID
