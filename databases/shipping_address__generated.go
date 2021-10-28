@@ -19,6 +19,7 @@ func (ShippingAddress) Indexes() github_com_eden_framework_sqlx_builder.Indexes 
 	return github_com_eden_framework_sqlx_builder.Indexes{
 		"I_user": []string{
 			"UserID",
+			"Default",
 		},
 	}
 }
@@ -39,6 +40,7 @@ func (ShippingAddress) UniqueIndexes() github_com_eden_framework_sqlx_builder.In
 func (ShippingAddress) Comments() map[string]string {
 	return map[string]string{
 		"Address":    "详细地址",
+		"Default":    "是否默认",
 		"District":   "省市区街道",
 		"Mobile":     "联系电话",
 		"Recipients": "收件人",
@@ -72,6 +74,9 @@ func (ShippingAddress) ColDescriptions() map[string][]string {
 	return map[string][]string{
 		"Address": []string{
 			"详细地址",
+		},
+		"Default": []string{
+			"是否默认",
 		},
 		"District": []string{
 			"省市区街道",
@@ -147,6 +152,14 @@ func (m *ShippingAddress) FieldMobile() *github_com_eden_framework_sqlx_builder.
 	return ShippingAddressTable.F(m.FieldKeyMobile())
 }
 
+func (ShippingAddress) FieldKeyDefault() string {
+	return "Default"
+}
+
+func (m *ShippingAddress) FieldDefault() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyDefault())
+}
+
 func (ShippingAddress) FieldKeyCreatedAt() string {
 	return "CreatedAt"
 }
@@ -177,6 +190,7 @@ func (ShippingAddress) ColRelations() map[string][]string {
 
 func (m *ShippingAddress) IndexFieldNames() []string {
 	return []string{
+		"Default",
 		"ID",
 		"ShippingID",
 		"UserID",
@@ -618,6 +632,20 @@ func (m *ShippingAddress) Count(db github_com_eden_framework_sqlx.DBExecutor, co
 	)
 
 	return count, err
+
+}
+
+func (m *ShippingAddress) BatchFetchByDefaultList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_framework_sqlx_datatypes.Bool) ([]ShippingAddress, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("Default").In(values)
+
+	return m.List(db, condition)
 
 }
 

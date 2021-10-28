@@ -41,9 +41,11 @@ func (c *Controller) Init(db sqlx.DBExecutor, d time.Duration, rule string, unlo
 	c.eventHandler = h
 	c.isInit = true
 
-	_, err := cron.GetManager().AddFunc(c.taskRule, c.taskCancelExpiredOrders(unlocker))
-	if err != nil {
-		logrus.Panicf("[order.Init] t.AddFunc err: %v, rules: %s", err, c.taskRule)
+	if c.taskRule != "" && unlocker != nil {
+		_, err := cron.GetManager().AddFunc(c.taskRule, c.taskCancelExpiredOrders(unlocker))
+		if err != nil {
+			logrus.Panicf("[order.Init] t.AddFunc err: %v, rules: %s", err, c.taskRule)
+		}
 	}
 }
 

@@ -243,7 +243,7 @@ func (c Controller) CreateShippingAddress(params CreateShippingAddressParams, db
 	return model, nil
 }
 
-func (c Controller) UpdateShippingAddress(params UpdateShippingAddressParams, db sqlx.DBExecutor) error {
+func (c Controller) UpdateShippingAddress(params UpdateShippingAddressParams, userID uint64, db sqlx.DBExecutor) error {
 	if !c.isInit {
 		logrus.Panicf("[UserController] not Init")
 	}
@@ -256,6 +256,10 @@ func (c Controller) UpdateShippingAddress(params UpdateShippingAddressParams, db
 		logrus.Errorf("[UpdateShippingAddress] model.FetchByShippingID err: %v, params: %+v", err, params)
 		return general_errors.InternalError
 	}
+	if userID != 0 && userID != model.UserID {
+		logrus.Errorf("[UpdateShippingAddress] userID != 0 && userID != model.UserID, params: %+v", params)
+		return general_errors.Forbidden
+	}
 
 	model.Recipients = params.Recipients
 	model.Mobile = params.Mobile
@@ -263,13 +267,13 @@ func (c Controller) UpdateShippingAddress(params UpdateShippingAddressParams, db
 	model.Address = params.Address
 	err = model.UpdateByShippingIDWithStruct(db)
 	if err != nil {
-		logrus.Errorf("[UpdateShippingAddress] model.UpdateByShippingIDWithStruct err: %v, params: %+v", err, params)
+		logrus.Errorf("[UpdateShippingAddress] model.UpdateByShippingIDWithStruct err: %v, userID: %d, params: %+v", err, userID, params)
 		return general_errors.InternalError
 	}
 	return nil
 }
 
-func (c Controller) DeleteShippingAddress(shippingID uint64, db sqlx.DBExecutor) error {
+func (c Controller) DeleteShippingAddress(shippingID uint64, userID uint64, db sqlx.DBExecutor) error {
 	if !c.isInit {
 		logrus.Panicf("[UserController] not Init")
 	}
@@ -285,10 +289,50 @@ func (c Controller) DeleteShippingAddress(shippingID uint64, db sqlx.DBExecutor)
 		logrus.Errorf("[UpdateShippingAddress] model.FetchByShippingID err: %v, id: %d", err, shippingID)
 		return general_errors.InternalError
 	}
+	if userID != 0 && userID != model.UserID {
+		logrus.Errorf("[UpdateShippingAddress] userID != 0 && userID != model.UserID, shippingID: %d, userID: %d", shippingID, userID)
+		return general_errors.Forbidden
+	}
 
 	err = model.SoftDeleteByShippingID(db)
 	if err != nil {
 		logrus.Errorf("[UpdateShippingAddress] model.SoftDeleteByShippingID err: %v, id: %d", err, shippingID)
+		return general_errors.InternalError
+	}
+	return nil
+}
+
+func (c Controller) SetDefaultShippingAddress(userID, shippingID uint64, db sqlx.DBExecutor) error {
+	if !c.isInit {
+		logrus.Panicf("[UserController] not Init")
+	}
+	if db == nil {
+		db = c.db
+	}
+	model := &databases.ShippingAddress{ShippingID: shippingID}
+	err := model.FetchByShippingID(db)
+	if err != nil {
+		if sqlx.DBErr(err).IsNotFound() {
+			return general_errors.NotFound.StatusError().WithMsg("未找到收货地址信息")
+		}
+		logrus.Errorf("[UpdateShippingAddress] model.FetchByShippingID err: %v, id: %d", err, shippingID)
+		return general_errors.InternalError
+	}
+	if userID != model.UserID {
+		logrus.Errorf("[UpdateShippingAddress] userID != 0 && userID != model.UserID, shippingID: %d, userID: %d", shippingID, userID)
+		return general_errors.Forbidden
+	}
+
+	err = model.ResetAllDefault(db)
+	if err != nil {
+		logrus.Errorf("[UpdateShippingAddress] model.ResetAllDefault err: %v, id: %d", err, shippingID)
+		return general_errors.InternalError
+	}
+
+	model.Default = datatypes.BOOL_TRUE
+	err = model.UpdateByShippingIDWithStruct(db)
+	if err != nil {
+		logrus.Errorf("[UpdateShippingAddress] model.UpdateByShippingIDWithStruct err: %v, id: %d", err, shippingID)
 		return general_errors.InternalError
 	}
 	return nil
