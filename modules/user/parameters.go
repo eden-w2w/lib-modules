@@ -135,3 +135,29 @@ func (p GetUserByNameOrOpenIDParams) Conditions() builder.SqlCondition {
 
 	return condition
 }
+
+type CreateShippingAddressParams struct {
+	// 用户ID
+	UserID uint64 `json:"userID,string" default:""`
+	// 收件人
+	Recipients string `json:"recipients"`
+	// 省市区街道
+	District string `json:"district"`
+	// 详细地址
+	Address string `json:"address"`
+	// 联系电话
+	Mobile string `json:"mobile"`
+}
+
+type UpdateShippingAddressParams struct {
+	// 业务ID
+	ShippingID uint64 `json:"shippingID,string" default:""`
+	// 收件人
+	Recipients string `json:"recipients" default:""`
+	// 省市区街道
+	District string `json:"district" default:""`
+	// 详细地址
+	Address string `json:"address" default:""`
+	// 联系电话
+	Mobile string `json:"mobile" default:""`
+}
