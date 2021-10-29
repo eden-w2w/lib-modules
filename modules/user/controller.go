@@ -219,6 +219,26 @@ func (c Controller) GetShippingAddressByUserID(userID uint64) ([]databases.Shipp
 	return data, nil
 }
 
+func (c Controller) GetShippingAddressByShippingID(shippingID, userID uint64) (*databases.ShippingAddress, error) {
+	if !c.isInit {
+		logrus.Panicf("[UserController] not Init")
+	}
+	model := &databases.ShippingAddress{ShippingID: shippingID}
+	err := model.FetchByShippingID(c.db)
+	if err != nil {
+		if sqlx.DBErr(err).IsNotFound() {
+			return nil, general_errors.NotFound.StatusError().WithMsg("未找到收货地址信息")
+		}
+		logrus.Errorf("[GetShippingAddressByShippingID] model.FetchByShippingID err: %v, shippingID: %d", err, shippingID)
+		return nil, general_errors.InternalError
+	}
+	if userID != 0 && userID != model.UserID {
+		logrus.Errorf("[GetShippingAddressByShippingID] userID != 0 && userID != model.UserID, shippingID: %d", shippingID)
+		return nil, general_errors.Forbidden
+	}
+	return model, nil
+}
+
 func (c Controller) CreateShippingAddress(params CreateShippingAddressParams, db sqlx.DBExecutor) (*databases.ShippingAddress, error) {
 	if !c.isInit {
 		logrus.Panicf("[UserController] not Init")
@@ -234,6 +254,7 @@ func (c Controller) CreateShippingAddress(params CreateShippingAddressParams, db
 		District:   params.District,
 		Address:    params.Address,
 		Mobile:     params.Mobile,
+		Default:    datatypes.BOOL_FALSE,
 	}
 	err := model.Create(db)
 	if err != nil {
