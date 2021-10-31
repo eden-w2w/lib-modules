@@ -98,6 +98,33 @@ func (c Controller) GetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBEx
 	}
 
 	if len(models) == 0 {
+		return nil, nil
+	}
+
+	if userID != 0 && models[0].UserID != userID {
+		logrus.Errorf("[GetFlowByOrderAndUserID] models[0].UserID != userID, orderID: %d, userID: %d", orderID, userID)
+		return nil, general_errors.Forbidden
+	}
+
+	return &models[0], nil
+}
+
+func (c Controller) MustGetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBExecutor) (*databases.PaymentFlow, error) {
+	if !c.isInit {
+		logrus.Panicf("[PaymentFlowController] not Init")
+	}
+	if db == nil {
+		db = c.db
+	}
+
+	model := &databases.PaymentFlow{}
+	models, err := model.BatchFetchByOrderAndStatus(db, orderID, enums.PAYMENT_STATUS__SUCCESS)
+	if err != nil {
+		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d", err, orderID, userID)
+		return nil, general_errors.InternalError
+	}
+
+	if len(models) == 0 {
 		logrus.Errorf("[GetFlowByOrderAndUserID] len(models) == 0, orderID: %d, userID: %d", orderID, userID)
 		return nil, general_errors.PaymentFlowNotFound
 	}

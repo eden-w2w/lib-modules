@@ -610,7 +610,7 @@ func (c Controller) UpdateOrder(order *databases.Order, logistics *databases.Ord
 		switch order.Status {
 		case enums.ORDER_STATUS__PAID:
 			// 获取支付流水
-			flow, err := payment_flow.GetController().GetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
+			flow, err := payment_flow.GetController().MustGetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
 			if err != nil {
 				return err
 			}

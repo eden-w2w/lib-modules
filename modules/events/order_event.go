@@ -21,7 +21,7 @@ func (o *OrderEvent) OnOrderPaidEvent(db sqlx.DBExecutor, order *databases.Order
 
 func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.Order) error {
 	// 获取支付流水
-	flow, err := payment_flow.GetController().GetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
+	flow, err := payment_flow.GetController().MustGetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
 	if err != nil {
 		return err
 	}
