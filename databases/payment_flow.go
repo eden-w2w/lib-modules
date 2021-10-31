@@ -10,7 +10,7 @@ import (
 //go:generate eden generate tag PaymentFlow --defaults=true
 // @def primary ID
 // @def unique_index U_flow_id FlowID
-// @def index I_order_id OrderID UserID Status
+// @def index I_order_id OrderID Status
 // @def index I_expire ExpiredAt
 type PaymentFlow struct {
 	datatypes.PrimaryID
@@ -35,11 +35,10 @@ type PaymentFlow struct {
 	datatypes.OperateTime
 }
 
-func (m PaymentFlow) BatchFetchByOrderAndUserID(db sqlx.DBExecutor, orderID, userID uint64, status enums.PaymentStatus) ([]PaymentFlow, error) {
+func (m PaymentFlow) BatchFetchByOrderAndStatus(db sqlx.DBExecutor, orderID uint64, status enums.PaymentStatus) ([]PaymentFlow, error) {
 	table := db.T(m)
 
 	condition := table.F(m.FieldKeyOrderID()).Eq(orderID)
-	condition = condition.And(table.F(m.FieldKeyUserID()).Eq(userID))
 	if status != enums.PAYMENT_STATUS_UNKNOWN {
 		condition = condition.And(table.F(m.FieldKeyStatus()).Eq(status))
 	}

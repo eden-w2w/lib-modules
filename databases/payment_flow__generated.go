@@ -7,7 +7,7 @@ import (
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
-	github_com_eden_w2_w_srv_w2_w_internal_contants_enums "github.com/eden-w2w/lib-modules/constants/enums"
+	github_com_eden_w2_w_lib_modules_constants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 func (PaymentFlow) PrimaryKey() []string {
@@ -23,7 +23,6 @@ func (PaymentFlow) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
 		},
 		"I_order_id": []string{
 			"OrderID",
-			"UserID",
 			"Status",
 		},
 	}
@@ -224,7 +223,6 @@ func (m *PaymentFlow) IndexFieldNames() []string {
 		"ID",
 		"OrderID",
 		"Status",
-		"UserID",
 	}
 }
 
@@ -722,7 +720,7 @@ func (m *PaymentFlow) BatchFetchByOrderIDList(db github_com_eden_framework_sqlx.
 
 }
 
-func (m *PaymentFlow) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_srv_w2_w_internal_contants_enums.PaymentStatus) ([]PaymentFlow, error) {
+func (m *PaymentFlow) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.PaymentStatus) ([]PaymentFlow, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -731,20 +729,6 @@ func (m *PaymentFlow) BatchFetchByStatusList(db github_com_eden_framework_sqlx.D
 	table := db.T(m)
 
 	condition := table.F("Status").In(values)
-
-	return m.List(db, condition)
-
-}
-
-func (m *PaymentFlow) BatchFetchByUserIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]PaymentFlow, error) {
-
-	if len(values) == 0 {
-		return nil, nil
-	}
-
-	table := db.T(m)
-
-	condition := table.F("UserID").In(values)
 
 	return m.List(db, condition)
 

@@ -91,15 +91,20 @@ func (c Controller) GetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBEx
 	}
 
 	model := &databases.PaymentFlow{}
-	models, err := model.BatchFetchByOrderAndUserID(db, orderID, userID, enums.PAYMENT_STATUS__SUCCESS)
+	models, err := model.BatchFetchByOrderAndStatus(db, orderID, enums.PAYMENT_STATUS__SUCCESS)
 	if err != nil {
-		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndUserID err: %v, orderID: %d, userID: %d", err, orderID, userID)
+		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d", err, orderID, userID)
 		return nil, general_errors.InternalError
 	}
 
 	if len(models) == 0 {
 		logrus.Errorf("[GetFlowByOrderAndUserID] len(models) == 0, orderID: %d, userID: %d", orderID, userID)
 		return nil, general_errors.PaymentFlowNotFound
+	}
+
+	if userID != 0 && models[0].UserID != userID {
+		logrus.Errorf("[GetFlowByOrderAndUserID] models[0].UserID != userID, orderID: %d, userID: %d", orderID, userID)
+		return nil, general_errors.Forbidden
 	}
 
 	return &models[0], nil
