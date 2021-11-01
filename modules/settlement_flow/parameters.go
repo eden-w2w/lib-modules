@@ -55,7 +55,7 @@ func (s *SettlementRule) UnmarshalText(text []byte) (err error) {
 	if err != nil {
 		return
 	}
-	s.Proportion, err = strconv.ParseFloat(strList[1], 64)
+	s.Proportion, err = strconv.ParseFloat(strList[2], 64)
 	return
 }
 
