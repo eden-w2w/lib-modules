@@ -104,6 +104,8 @@ type GoodsListResponse struct {
 	GoodsID uint64 `json:"goodsID,string"`
 	// 名称
 	Name string `json:"name"`
+	// 简介
+	Comment string `json:"comment"`
 	// 标题图片
 	MainPicture string `json:"mainPicture"`
 	// 规格
