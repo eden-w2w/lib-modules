@@ -2,10 +2,13 @@ package events
 
 import (
 	"github.com/eden-framework/sqlx"
+	"github.com/eden-framework/sqlx/datatypes"
+	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
 	"github.com/eden-w2w/lib-modules/modules/user"
+	"github.com/sirupsen/logrus"
 )
 
 type OrderEvent struct {
@@ -57,6 +60,34 @@ func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.O
 
 	// 更新提成概况
 	return err
+}
+
+func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error {
+	// 获取支付流水
+	flow, err := payment_flow.GetController().MustGetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
+	if err != nil {
+		return err
+	}
+
+	// 查询是否存在关联的佣金流水单
+	proCtrl := promotion_flow.GetController()
+	promotions, _, err := proCtrl.GetPromotionFlows(promotion_flow.GetPromotionFlowParams{
+		PaymentFlowID:   flow.FlowID,
+		IsNotSettlement: datatypes.BOOL_TRUE,
+	}, false)
+	if err != nil {
+		return err
+	}
+
+	if len(promotions) > 0 {
+		err = promotions[0].SoftDeleteByFlowID(db)
+		if err != nil {
+			logrus.Errorf("[OnOrderCloseEvent] promotions[0].SoftDeleteByFlowID(db) err: %v, flowID: %d", err, flow.FlowID)
+			return general_errors.InternalError
+		}
+	}
+
+	return nil
 }
 
 func NewOrderEvent() *OrderEvent {

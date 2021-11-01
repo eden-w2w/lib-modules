@@ -17,6 +17,7 @@ type EventHandler interface {
 	OnOrderCreateEvent(db sqlx.DBExecutor, order *databases.Order) error
 	OnOrderPaidEvent(db sqlx.DBExecutor, order *databases.Order, payment *databases.PaymentFlow) error
 	OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.Order) error
+	OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error
 }
 
 type CreateOrderParams struct {

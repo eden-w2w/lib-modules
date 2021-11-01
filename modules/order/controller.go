@@ -662,6 +662,11 @@ func (c Controller) CancelOrder(orderID, userID uint64, unlocker InventoryUnlock
 		return nil
 	})
 
+	tx = tx.With(func(db sqlx.DBExecutor) error {
+		// 执行订单取消事件
+		return c.eventHandler.OnOrderCloseEvent(db, order)
+	})
+
 	err = tx.Do()
 	if err != nil {
 		logrus.Errorf("[CancelOrder] tx.Do() err: %v, orderID: %d, userID: %d", err, orderID, userID)
