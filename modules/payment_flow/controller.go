@@ -82,7 +82,7 @@ func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DB
 	return model, nil
 }
 
-func (c Controller) GetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBExecutor) (*databases.PaymentFlow, error) {
+func (c Controller) GetFlowByOrderIDAndStatus(orderID, userID uint64, status []enums.PaymentStatus, db sqlx.DBExecutor) ([]databases.PaymentFlow, error) {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
@@ -91,7 +91,7 @@ func (c Controller) GetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBEx
 	}
 
 	model := &databases.PaymentFlow{}
-	models, err := model.BatchFetchByOrderAndStatus(db, orderID, enums.PAYMENT_STATUS__SUCCESS)
+	models, err := model.BatchFetchByOrderAndStatus(db, orderID, status)
 	if err != nil {
 		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d", err, orderID, userID)
 		return nil, general_errors.InternalError
@@ -106,10 +106,10 @@ func (c Controller) GetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBEx
 		return nil, general_errors.Forbidden
 	}
 
-	return &models[0], nil
+	return models, nil
 }
 
-func (c Controller) MustGetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.DBExecutor) (*databases.PaymentFlow, error) {
+func (c Controller) MustGetFlowByOrderIDAndStatus(orderID, userID uint64, status []enums.PaymentStatus, db sqlx.DBExecutor) ([]databases.PaymentFlow, error) {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
@@ -118,7 +118,7 @@ func (c Controller) MustGetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.
 	}
 
 	model := &databases.PaymentFlow{}
-	models, err := model.BatchFetchByOrderAndStatus(db, orderID, enums.PAYMENT_STATUS__SUCCESS)
+	models, err := model.BatchFetchByOrderAndStatus(db, orderID, status)
 	if err != nil {
 		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d", err, orderID, userID)
 		return nil, general_errors.InternalError
@@ -134,7 +134,7 @@ func (c Controller) MustGetFlowByOrderAndUserID(orderID, userID uint64, db sqlx.
 		return nil, general_errors.Forbidden
 	}
 
-	return &models[0], nil
+	return models, nil
 }
 
 func (c Controller) UpdatePaymentFlowRemoteID(flowID uint64, prepayID string, db sqlx.DBExecutor) error {

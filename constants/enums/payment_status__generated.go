@@ -12,6 +12,7 @@ var InvalidPaymentStatus = errors.New("invalid PaymentStatus")
 
 func init() {
 	github_com_eden_framework_enumeration.RegisterEnums("PaymentStatus", map[string]string{
+		"REFUND":  "转入退款单",
 		"CLOSED":  "已关闭",
 		"FAIL":    "支付失败",
 		"SUCCESS": "支付成功",
@@ -24,6 +25,8 @@ func ParsePaymentStatusFromString(s string) (PaymentStatus, error) {
 	switch s {
 	case "":
 		return PAYMENT_STATUS_UNKNOWN, nil
+	case "REFUND":
+		return PAYMENT_STATUS__REFUND, nil
 	case "CLOSED":
 		return PAYMENT_STATUS__CLOSED, nil
 	case "FAIL":
@@ -42,6 +45,8 @@ func ParsePaymentStatusFromLabelString(s string) (PaymentStatus, error) {
 	switch s {
 	case "":
 		return PAYMENT_STATUS_UNKNOWN, nil
+	case "转入退款单":
+		return PAYMENT_STATUS__REFUND, nil
 	case "已关闭":
 		return PAYMENT_STATUS__CLOSED, nil
 	case "支付失败":
@@ -62,6 +67,7 @@ func (PaymentStatus) EnumType() string {
 
 func (PaymentStatus) Enums() map[int][]string {
 	return map[int][]string{
+		int(PAYMENT_STATUS__REFUND):  {"REFUND", "转入退款单"},
 		int(PAYMENT_STATUS__CLOSED):  {"CLOSED", "已关闭"},
 		int(PAYMENT_STATUS__FAIL):    {"FAIL", "支付失败"},
 		int(PAYMENT_STATUS__SUCCESS): {"SUCCESS", "支付成功"},
@@ -74,6 +80,8 @@ func (v PaymentStatus) String() string {
 	switch v {
 	case PAYMENT_STATUS_UNKNOWN:
 		return ""
+	case PAYMENT_STATUS__REFUND:
+		return "REFUND"
 	case PAYMENT_STATUS__CLOSED:
 		return "CLOSED"
 	case PAYMENT_STATUS__FAIL:
@@ -92,6 +100,8 @@ func (v PaymentStatus) Label() string {
 	switch v {
 	case PAYMENT_STATUS_UNKNOWN:
 		return ""
+	case PAYMENT_STATUS__REFUND:
+		return "转入退款单"
 	case PAYMENT_STATUS__CLOSED:
 		return "已关闭"
 	case PAYMENT_STATUS__FAIL:

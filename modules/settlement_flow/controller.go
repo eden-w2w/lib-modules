@@ -11,7 +11,6 @@ import (
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
 	"github.com/eden-w2w/lib-modules/modules/task_flow"
-	"github.com/eden-w2w/lib-modules/pkg/cron"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -28,7 +27,7 @@ func GetController() *Controller {
 type Controller struct {
 	isInit bool
 	db     sqlx.DBExecutor
-	config *SettlementConfig
+	config SettlementConfig
 }
 
 type settlementPromotionMapping struct {
@@ -36,18 +35,9 @@ type settlementPromotionMapping struct {
 	flowIDs *[]uint64
 }
 
-func (c *Controller) Init(db sqlx.DBExecutor, config *SettlementConfig) {
+func (c *Controller) Init(db sqlx.DBExecutor, config SettlementConfig) {
 	c.db = db
-
-	if config != nil {
-		c.config = config
-		if c.config.SettlementType != enums.SETTLEMENT_TYPE_UNKNOWN {
-			_, err := cron.GetManager().AddFunc(config.ToSettlementCronRule(), c.TaskSettlement)
-			if err != nil {
-				logrus.Panicf("[settlement_flow.Init] t.AddFunc err: %v, rules: %s", err, config.ToSettlementCronRule())
-			}
-		}
-	}
+	c.config = config
 	c.isInit = true
 }
 

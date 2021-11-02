@@ -3,6 +3,7 @@ package events
 import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/datatypes"
+	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
@@ -24,10 +25,12 @@ func (o *OrderEvent) OnOrderPaidEvent(db sqlx.DBExecutor, order *databases.Order
 
 func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.Order) error {
 	// 获取支付流水
-	flow, err := payment_flow.GetController().MustGetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
+	flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(order.OrderID, order.UserID, []enums.PaymentStatus{enums.PAYMENT_STATUS__SUCCESS}, db)
 	if err != nil {
 		return err
 	}
+
+	flow := flows[0]
 
 	// 获取订单创建者
 	orderUser, err := user.GetController().GetUserByUserID(order.UserID, db, true)
@@ -64,10 +67,12 @@ func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.O
 
 func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error {
 	// 获取支付流水
-	flow, err := payment_flow.GetController().MustGetFlowByOrderAndUserID(order.OrderID, order.UserID, db)
+	flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(order.OrderID, order.UserID, []enums.PaymentStatus{enums.PAYMENT_STATUS__SUCCESS}, db)
 	if err != nil {
 		return err
 	}
+
+	flow := flows[0]
 
 	// 查询是否存在关联的佣金流水单
 	proCtrl := promotion_flow.GetController()

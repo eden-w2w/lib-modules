@@ -1,7 +1,9 @@
 package databases
 
 import (
+	"errors"
 	"github.com/eden-framework/sqlx"
+	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/constants/enums"
 )
@@ -35,12 +37,17 @@ type PaymentFlow struct {
 	datatypes.OperateTime
 }
 
-func (m PaymentFlow) BatchFetchByOrderAndStatus(db sqlx.DBExecutor, orderID uint64, status enums.PaymentStatus) ([]PaymentFlow, error) {
+func (m PaymentFlow) BatchFetchByOrderAndStatus(db sqlx.DBExecutor, orderID uint64, status []enums.PaymentStatus) ([]PaymentFlow, error) {
+	if orderID == 0 && (status == nil || len(status) == 0) {
+		return nil, errors.New("invalid orderID and status")
+	}
 	table := db.T(m)
-
-	condition := table.F(m.FieldKeyOrderID()).Eq(orderID)
-	if status != enums.PAYMENT_STATUS_UNKNOWN {
-		condition = condition.And(table.F(m.FieldKeyStatus()).Eq(status))
+	var condition builder.SqlCondition
+	if orderID != 0 {
+		condition = builder.And(condition, table.F(m.FieldKeyOrderID()).Eq(orderID))
+	}
+	if status != nil && len(status) > 0 {
+		condition = builder.And(condition, table.F(m.FieldKeyStatus()).In(status))
 	}
 
 	return m.List(db, condition)

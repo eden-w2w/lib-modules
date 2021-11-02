@@ -5,7 +5,6 @@ import (
 	"fmt"
 	errors "github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
-	"github.com/eden-w2w/lib-modules/pkg/cron"
 	w "github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
 	"github.com/silenceper/wechat/v2/miniprogram"
@@ -60,23 +59,27 @@ type Wechat struct {
 }
 
 type Controller struct {
-	wc        *w.Wechat
-	program   *miniprogram.MiniProgram
-	payClient *core.Client
-	config    Wechat
-	isInit    bool
+	wc           *w.Wechat
+	program      *miniprogram.MiniProgram
+	payClient    *core.Client
+	jsapiService jsapi.JsapiApiService
+	config       Wechat
+	isInit       bool
 }
 
 func (c *Controller) Init(wechatConfig Wechat) {
 	wc := w.NewWechat()
 	memory := cache.NewMemory()
-	program := wc.GetMiniProgram(&programConfig.Config{
-		AppID:     wechatConfig.AppID,
-		AppSecret: wechatConfig.AppSecret,
-		Cache:     memory,
-	})
+	program := wc.GetMiniProgram(
+		&programConfig.Config{
+			AppID:     wechatConfig.AppID,
+			AppSecret: wechatConfig.AppSecret,
+			Cache:     memory,
+		},
+	)
 
 	var client *core.Client
+	var service jsapi.JsapiApiService
 	if wechatConfig.EnableWechatPay {
 		mchPK, err := utils.LoadPrivateKey(wechatConfig.MerchantPK)
 		if err != nil {
@@ -88,29 +91,31 @@ func (c *Controller) Init(wechatConfig Wechat) {
 				wechatConfig.MerchantID,
 				wechatConfig.MerchantCertSerialNo,
 				mchPK,
-				wechatConfig.MerchantSecret),
+				wechatConfig.MerchantSecret,
+			),
 		}
 		client, err = core.NewClient(ctx, opts...)
 		if err != nil {
 			logrus.Panicf("[wechat.newController] core.NewClient err: %v", err)
+		}
+
+		service = jsapi.JsapiApiService{
+			Client: client,
 		}
 	}
 
 	c.wc = wc
 	c.program = program
 	c.payClient = client
+	c.jsapiService = service
 	c.config = wechatConfig
 	c.isInit = true
-
-	if wechatConfig.FetchWechatPaymentStatusTask != "" {
-		_, err := cron.GetManager().AddFunc(wechatConfig.FetchWechatPaymentStatusTask, c.TaskFetchWechatPaymentStatus)
-		if err != nil {
-			logrus.Panicf("[wechat.Init] t.AddFunc err: %v, rules: %s", err, wechatConfig.FetchWechatPaymentStatusTask)
-		}
-	}
 }
 
 func (c Controller) Code2Session(code string) (*auth.ResCode2Session, error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	resp, err := c.program.GetAuth().Code2Session(code)
 	if err != nil {
 		logrus.Errorf("[Code2Session] c.program.GetAuth().Code2Session(code) err: %v, code: %s", err, code)
@@ -120,9 +125,17 @@ func (c Controller) Code2Session(code string) (*auth.ResCode2Session, error) {
 }
 
 func (c Controller) ExchangeEncryptedData(sessionKey string, params WechatUserInfo) (*encryptor.PlainData, error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	plain, err := c.program.GetEncryptor().Decrypt(sessionKey, params.EncryptedData, params.IV)
 	if err != nil {
-		logrus.Errorf("[ExchangeEncryptedData] program.GetEncryptor().Decrypt err: %v, sessionKey: %s, params: %+v", err, sessionKey, params)
+		logrus.Errorf(
+			"[ExchangeEncryptedData] program.GetEncryptor().Decrypt err: %v, sessionKey: %s, params: %+v",
+			err,
+			sessionKey,
+			params,
+		)
 		return nil, errors.InternalError
 	}
 
@@ -130,24 +143,36 @@ func (c Controller) ExchangeEncryptedData(sessionKey string, params WechatUserIn
 }
 
 func (c Controller) GetUnlimitedQrCode(params qrcode.QRCoder) (buffer []byte, err error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	buffer, err = c.program.GetQRCode().GetWXACodeUnlimit(params)
 	if err != nil {
-		logrus.Errorf("[GetUnlimitedQrCode] c.program.GetQRCode().GetWXACodeUnlimit(params) err: %v, params: %+v", err, params)
+		logrus.Errorf(
+			"[GetUnlimitedQrCode] c.program.GetQRCode().GetWXACodeUnlimit(params) err: %v, params: %+v",
+			err,
+			params,
+		)
 		return nil, errors.BadGateway
 	}
 
 	return
 }
 
-func (c Controller) CreatePrePayment(ctx context.Context, order *databases.Order, flow *databases.PaymentFlow, payer *databases.User) (resp *jsapi.PrepayWithRequestPaymentResponse, err error) {
+func (c Controller) CreatePrePayment(
+	ctx context.Context,
+	order *databases.Order,
+	flow *databases.PaymentFlow,
+	payer *databases.User,
+) (resp *jsapi.PrepayWithRequestPaymentResponse, err error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	if c.payClient == nil {
 		return
 	}
 	if !c.config.EnableWechatPay {
 		return
-	}
-	service := jsapi.JsapiApiService{
-		Client: c.payClient,
 	}
 	request := jsapi.PrepayRequest{
 		Appid:         core.String(c.config.AppID),
@@ -171,7 +196,7 @@ func (c Controller) CreatePrePayment(ctx context.Context, order *databases.Order
 		SceneInfo:  nil,
 		SettleInfo: nil,
 	}
-	resp, _, err = service.PrepayWithRequestPayment(ctx, request)
+	resp, _, err = c.jsapiService.PrepayWithRequestPayment(ctx, request)
 	if err != nil {
 		logrus.Errorf("[CreatePrePayment] service.PrepayWithRequestPayment err: %v, request: %+v", err, request)
 		return nil, errors.BadGateway
@@ -179,7 +204,14 @@ func (c Controller) CreatePrePayment(ctx context.Context, order *databases.Order
 	return
 }
 
-func (c Controller) ParseWechatPaymentNotify(ctx context.Context, request *http.Request) (*notify.Request, *payments.Transaction, error) {
+func (c Controller) ParseWechatPaymentNotify(ctx context.Context, request *http.Request) (
+	*notify.Request,
+	*payments.Transaction,
+	error,
+) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	certVisitor := downloader.MgrInstance().GetCertificateVisitor(c.config.MerchantID)
 	handler := notify.NewNotifyHandler(c.config.MerchantSecret, verifiers.NewSHA256WithRSAVerifier(certVisitor))
 
@@ -193,6 +225,17 @@ func (c Controller) ParseWechatPaymentNotify(ctx context.Context, request *http.
 	return notifyReq, transaction, nil
 }
 
-func (c *Controller) TaskFetchWechatPaymentStatus() {
-
+func (c Controller) QueryOrderByOutTradeNo(req jsapi.QueryOrderByOutTradeNoRequest) (
+	resp *payments.Transaction,
+	err error,
+) {
+	resp, _, err = c.jsapiService.QueryOrderByOutTradeNo(context.Background(), req)
+	if err != nil {
+		logrus.Warningf(
+			"[QueryOrderByOutTradeNo] c.jsapiService.QueryOrderByOutTradeNo err: %v, request: %+v",
+			err,
+			req,
+		)
+	}
+	return
 }

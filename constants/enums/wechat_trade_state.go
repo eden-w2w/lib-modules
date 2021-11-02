@@ -32,6 +32,9 @@ func (v WechatTradeState) IsEqual(status PaymentStatus) bool {
 	if v == WECHAT_TRADE_STATE__CLOSED && status == PAYMENT_STATUS__CLOSED {
 		return true
 	}
+	if v == WECHAT_TRADE_STATE__REFUND && status == PAYMENT_STATUS__REFUND {
+		return true
+	}
 	return false
 }
 
