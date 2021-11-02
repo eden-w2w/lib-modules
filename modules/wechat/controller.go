@@ -239,3 +239,15 @@ func (c Controller) QueryOrderByOutTradeNo(req jsapi.QueryOrderByOutTradeNoReque
 	}
 	return
 }
+
+func (c Controller) CloseOrder(req jsapi.CloseOrderRequest) error {
+	_, err := c.jsapiService.CloseOrder(context.Background(), req)
+	if err != nil {
+		logrus.Warningf(
+			"[CloseOrder] c.jsapiService.CloseOrder err: %v, request: %+v",
+			err,
+			req,
+		)
+	}
+	return err
+}
