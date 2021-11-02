@@ -68,3 +68,22 @@ func (v WechatTradeState) IsRefund() bool {
 	}
 	return false
 }
+
+func (v WechatTradeState) ToPaymentStatus() PaymentStatus {
+	switch v {
+	case WECHAT_TRADE_STATE__NOTPAY:
+		return PAYMENT_STATUS__CREATED
+	case WECHAT_TRADE_STATE__SUCCESS:
+		return PAYMENT_STATUS__SUCCESS
+	case WECHAT_TRADE_STATE__USERPAYING:
+		return PAYMENT_STATUS__PROCESS
+	case WECHAT_TRADE_STATE__PAYERROR:
+		return PAYMENT_STATUS__FAIL
+	case WECHAT_TRADE_STATE__CLOSED, WECHAT_TRADE_STATE__REVOKED:
+		return PAYMENT_STATUS__CLOSED
+	case WECHAT_TRADE_STATE__REFUND:
+		return PAYMENT_STATUS__REFUND
+	default:
+		return PAYMENT_STATUS_UNKNOWN
+	}
+}
