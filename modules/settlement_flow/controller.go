@@ -41,9 +41,11 @@ func (c *Controller) Init(db sqlx.DBExecutor, config *SettlementConfig) {
 
 	if config != nil {
 		c.config = config
-		_, err := cron.GetManager().AddFunc(config.ToSettlementCronRule(), c.TaskSettlement)
-		if err != nil {
-			logrus.Panicf("[settlement_flow.Init] t.AddFunc err: %v, rules: %s", err, config.ToSettlementCronRule())
+		if c.config.SettlementType != enums.SETTLEMENT_TYPE_UNKNOWN {
+			_, err := cron.GetManager().AddFunc(config.ToSettlementCronRule(), c.TaskSettlement)
+			if err != nil {
+				logrus.Panicf("[settlement_flow.Init] t.AddFunc err: %v, rules: %s", err, config.ToSettlementCronRule())
+			}
 		}
 	}
 	c.isInit = true
