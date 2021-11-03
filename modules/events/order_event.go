@@ -66,14 +66,17 @@ func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.O
 }
 
 func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error {
-	// 获取支付流水
-	flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(order.OrderID, order.UserID, []enums.PaymentStatus{enums.PAYMENT_STATUS__SUCCESS}, db)
+	// 获取支付流水 TODO
+	flows, err := payment_flow.GetController().GetFlowByOrderIDAndStatus(order.OrderID, order.UserID, []enums.PaymentStatus{enums.PAYMENT_STATUS__SUCCESS}, db)
 	if err != nil {
 		return err
 	}
 
-	flow := flows[0]
+	if flows == nil || len(flows) == 0 {
+		return nil
+	}
 
+	flow := flows[0]
 	// 查询是否存在关联的佣金流水单
 	proCtrl := promotion_flow.GetController()
 	promotions, _, err := proCtrl.GetPromotionFlows(promotion_flow.GetPromotionFlowParams{
