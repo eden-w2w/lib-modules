@@ -131,12 +131,35 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 				},
 			)
 			if err != nil {
-				logrus.Errorf(
-					"[OnOrderCloseEvent] wechat.GetController().CloseOrder err: %v, flowID: %d",
-					err,
-					flow.FlowID,
-				)
 				return general_errors.InternalError
+			}
+			tran, err := wechat.GetController().QueryOrderByOutTradeNo(
+				jsapi.QueryOrderByOutTradeNoRequest{
+					OutTradeNo: core.String(fmt.Sprintf("%d", flow.FlowID)),
+					Mchid:      core.String(o.merchantID),
+				},
+			)
+			if err != nil {
+				return general_errors.InternalError
+			}
+			tradeState, err := enums.ParseWechatTradeStateFromString(*tran.TradeState)
+			if err != nil {
+				logrus.Errorf(
+					"[OnOrderCloseEvent] enums.ParseWechatTradeStateFromString err: %v, TradeState: %s",
+					err,
+					*tran.TradeState,
+				)
+				return err
+			}
+			// 更新支付单
+			err = payment_flow.GetController().UpdatePaymentFlowStatus(
+				&flow,
+				tradeState.ToPaymentStatus(),
+				tran,
+				db,
+			)
+			if err != nil {
+				return err
 			}
 		}
 	}
