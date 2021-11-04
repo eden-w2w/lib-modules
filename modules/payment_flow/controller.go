@@ -82,6 +82,26 @@ func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DB
 	return model, nil
 }
 
+func (c Controller) GetPaymentFlows(params GetPaymentFlowsParams, withCount bool) (data []databases.PaymentFlow, total int, err error) {
+	model := databases.PaymentFlow{}
+	data, err = model.List(c.db, params.Conditions(), params.Additions()...)
+	if err != nil {
+		logrus.Errorf("[GetPaymentFlows] model.List err: %v, params: %+v", err, params)
+		err = general_errors.InternalError
+		return
+	}
+
+	if withCount {
+		total, err = model.Count(c.db, params.Conditions())
+		if err != nil {
+			logrus.Errorf("[GetPaymentFlows] model.Count err: %v, params: %+v", err, params)
+			err = general_errors.InternalError
+			return
+		}
+	}
+	return
+}
+
 func (c Controller) GetFlowByOrderIDAndStatus(orderID, userID uint64, status []enums.PaymentStatus, db sqlx.DBExecutor) ([]databases.PaymentFlow, error) {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
