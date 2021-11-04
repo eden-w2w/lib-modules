@@ -180,10 +180,6 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
-	if trans == nil {
-		logrus.Errorf("[UpdatePaymentFlowSuccess] trans == nil")
-		return general_errors.InternalError
-	}
 	if db == nil {
 		db = c.db
 	}
@@ -193,16 +189,19 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 		return general_errors.PaymentFlowNotFound
 	}
 
-	transJson, err := trans.MarshalJSON()
-	if err != nil {
-		logrus.Errorf("[UpdatePaymentFlowSuccess] trans.MarshalJSON() err: %v, flowID: %d, status: %s", err, flow.FlowID, status.String())
-		return general_errors.InternalError
-	}
 	fields := builder.FieldValues{
-		"RemoteData": string(transJson),
-		"Status":     status,
+		"Status": status,
 	}
-	err = flow.UpdateByFlowIDWithMap(db, fields)
+	if trans != nil {
+		transJson, err := trans.MarshalJSON()
+		if err != nil {
+			logrus.Errorf("[UpdatePaymentFlowSuccess] trans.MarshalJSON() err: %v, flowID: %d, status: %s", err, flow.FlowID, status.String())
+			return general_errors.InternalError
+		}
+		fields["RemoteData"] = string(transJson)
+	}
+
+	err := flow.UpdateByFlowIDWithMap(db, fields)
 	if err != nil {
 		logrus.Errorf("[UpdatePaymentFlowSuccess] model.UpdateByFlowIDWithMap err: %v, flowID: %d, status: %s", err, flow.FlowID, status.String())
 		return general_errors.InternalError

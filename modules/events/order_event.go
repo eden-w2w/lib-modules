@@ -82,7 +82,7 @@ func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.O
 }
 
 func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error {
-	// 获取支付流水 TODO
+	// 获取支付流水
 	flows, err := payment_flow.GetController().GetFlowByOrderIDAndStatus(
 		order.OrderID,
 		order.UserID,
@@ -121,6 +121,11 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 					)
 					return general_errors.InternalError
 				}
+			}
+
+			err = o.RefundPayment(flow, db)
+			if err != nil {
+				return err
 			}
 		} else if flow.Status == enums.PAYMENT_STATUS__CREATED {
 			// 微信关单
@@ -169,4 +174,18 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 
 func NewOrderEvent(merchantID string) *OrderEvent {
 	return &OrderEvent{merchantID: merchantID}
+}
+
+func (o *OrderEvent) RefundPayment(flow databases.PaymentFlow, db sqlx.DBExecutor) error {
+	// 变更支付单状态为转入退款
+	err := payment_flow.GetController().UpdatePaymentFlowStatus(&flow, enums.PAYMENT_STATUS__REFUND, nil, db)
+	if err != nil {
+		return err
+	}
+
+	// TODO 创建退款单
+
+	// TODO 微信支付退款
+
+	return nil
 }
