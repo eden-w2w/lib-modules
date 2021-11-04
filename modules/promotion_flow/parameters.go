@@ -82,7 +82,7 @@ func (p GetPromotionFlowParams) Additions() []builder.Addition {
 	if p.Size != 0 {
 		limit := builder.Limit(int64(p.Size))
 		if p.Offset != 0 {
-			limit.Offset(int64(p.Offset))
+			limit = limit.Offset(int64(p.Offset))
 		}
 		additions = append(additions, limit)
 	}
