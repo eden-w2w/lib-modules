@@ -678,6 +678,8 @@ func (c Controller) UpdateOrder(
 	if orderStatus != order.Status {
 		// 状态发生变更，执行状态变更事件
 		switch order.Status {
+		case enums.ORDER_STATUS__CONFIRM:
+			_ = c.eventHandler.OnOrderConfirmEvent(db, order)
 		case enums.ORDER_STATUS__PAID:
 			// 获取支付流水
 			flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(
@@ -691,8 +693,15 @@ func (c Controller) UpdateOrder(
 			}
 			flow := flows[0]
 			err = c.eventHandler.OnOrderPaidEvent(db, order, &flow)
+		case enums.ORDER_STATUS__DISPATCH:
+			_ = c.eventHandler.OnOrderDispatchEvent(db, order, logistics)
 		case enums.ORDER_STATUS__COMPLETE:
-			err = c.eventHandler.OnOrderCompleteEvent(db, order)
+			// 获取商品列表
+			goods, err := c.GetOrderGoods(order.OrderID, db)
+			if err != nil {
+				return err
+			}
+			err = c.eventHandler.OnOrderCompleteEvent(db, order, logistics, goods)
 		}
 	}
 

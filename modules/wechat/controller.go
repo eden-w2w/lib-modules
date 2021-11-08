@@ -12,6 +12,7 @@ import (
 	programConfig "github.com/silenceper/wechat/v2/miniprogram/config"
 	"github.com/silenceper/wechat/v2/miniprogram/encryptor"
 	"github.com/silenceper/wechat/v2/miniprogram/qrcode"
+	"github.com/silenceper/wechat/v2/miniprogram/subscribe"
 	"github.com/sirupsen/logrus"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
@@ -56,6 +57,17 @@ type Wechat struct {
 
 	// 定时查单任务配置
 	FetchWechatPaymentStatusTask string
+
+	// 订单确认通知订阅消息模板
+	ConfirmMessageTemplateID string
+	// 发货通知订阅消息模板
+	DispatchMessageTemplateID string
+	// 订单完成通知订阅消息模板
+	CompleteMessageTemplateID string
+	// 订单相关通知页面地址
+	OrderPage string
+	// 跳转小程序类型
+	ProgramState string
 }
 
 type Controller struct {
@@ -248,6 +260,14 @@ func (c Controller) CloseOrder(req jsapi.CloseOrderRequest) error {
 			err,
 			req,
 		)
+	}
+	return err
+}
+
+func (c Controller) SendSubscribeMessage(msg *subscribe.Message) error {
+	err := c.program.GetSubscribe().Send(msg)
+	if err != nil {
+		logrus.Warningf("[SendSubscribeMessage] c.program.GetSubscribe().Send err: %v, msg: %+v", err, msg)
 	}
 	return err
 }

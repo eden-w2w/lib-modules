@@ -11,16 +11,38 @@ import (
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
 	"github.com/eden-w2w/lib-modules/modules/user"
 	"github.com/eden-w2w/lib-modules/modules/wechat"
+	"github.com/eden-w2w/lib-modules/pkg/strings"
+	"github.com/silenceper/wechat/v2/miniprogram/subscribe"
 	"github.com/sirupsen/logrus"
 	"github.com/wechatpay-apiv3/wechatpay-go/core"
 	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 )
 
 type OrderEvent struct {
-	merchantID string
+	config wechat.Wechat
+}
+
+func NewOrderEvent(config wechat.Wechat) *OrderEvent {
+	return &OrderEvent{config: config}
 }
 
 func (o *OrderEvent) OnOrderCreateEvent(db sqlx.DBExecutor, order *databases.Order) error {
+	return nil
+}
+
+func (o *OrderEvent) OnOrderConfirmEvent(db sqlx.DBExecutor, order *databases.Order) error {
+	msg := &subscribe.Message{
+		ToUser:     order.UserOpenID,
+		TemplateID: o.config.ConfirmMessageTemplateID,
+		Page:       fmt.Sprintf("%s?orderID=%d", o.config.OrderPage, order.OrderID),
+		Data: map[string]*subscribe.DataItem{
+			"character_string1": {Value: order.OrderID},
+			"thing2":            {Value: "已确认"},
+			"thing4":            {Value: "已收到您的付款，正在备货哟"},
+		},
+		MiniprogramState: o.config.ProgramState,
+	}
+	_ = wechat.GetController().SendSubscribeMessage(msg)
 	return nil
 }
 
@@ -32,7 +54,25 @@ func (o *OrderEvent) OnOrderPaidEvent(
 	return nil
 }
 
-func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.Order) error {
+func (o *OrderEvent) OnOrderDispatchEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics) error {
+	msg := &subscribe.Message{
+		ToUser:     order.UserOpenID,
+		TemplateID: o.config.DispatchMessageTemplateID,
+		Page:       fmt.Sprintf("%s?orderID=%d", o.config.OrderPage, order.OrderID),
+		Data: map[string]*subscribe.DataItem{
+			"character_string5": {Value: order.OrderID},
+			"thing7":            {Value: strings.ShortenString(logistics.Recipients, 17, "...")},
+			"thing8":            {Value: strings.ShortenString(logistics.ShippingAddr, 17, "...")},
+			"thing2":            {Value: strings.ShortenString(logistics.CourierCompany, 17, "...")},
+			"character_string3": {Value: logistics.CourierNumber},
+		},
+		MiniprogramState: o.config.ProgramState,
+	}
+	_ = wechat.GetController().SendSubscribeMessage(msg)
+	return nil
+}
+
+func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics, goods []databases.OrderGoods) error {
 	// 获取支付流水
 	flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(
 		order.OrderID,
@@ -76,6 +116,25 @@ func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.O
 			PaymentFlowID:   flow.FlowID,
 		}, db,
 	)
+
+	var goodsName = ""
+	if len(goods) > 0 {
+		goodsName = goods[0].Name
+	}
+	msg := &subscribe.Message{
+		ToUser:     order.UserOpenID,
+		TemplateID: o.config.CompleteMessageTemplateID,
+		Page:       fmt.Sprintf("%s?orderID=%d", o.config.OrderPage, order.OrderID),
+		Data: map[string]*subscribe.DataItem{
+			"character_string5": {Value: order.OrderID},
+			"thing1":            {Value: strings.ShortenString(goodsName, 17, "...")},
+			"thing2":            {Value: strings.ShortenString(logistics.Recipients, 17, "...")},
+			"phone_number3":     {Value: strings.ShortenString(logistics.Mobile, 14, "...")},
+			"time7":             {Value: order.UpdatedAt.Format("2006-01-02 15:04:05")},
+		},
+		MiniprogramState: o.config.ProgramState,
+	}
+	_ = wechat.GetController().SendSubscribeMessage(msg)
 
 	// 更新提成概况
 	return err
@@ -132,7 +191,7 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 			err = wechat.GetController().CloseOrder(
 				jsapi.CloseOrderRequest{
 					OutTradeNo: core.String(fmt.Sprintf("%d", flow.FlowID)),
-					Mchid:      core.String(o.merchantID),
+					Mchid:      core.String(o.config.MerchantID),
 				},
 			)
 			if err != nil {
@@ -141,7 +200,7 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 			tran, err := wechat.GetController().QueryOrderByOutTradeNo(
 				jsapi.QueryOrderByOutTradeNoRequest{
 					OutTradeNo: core.String(fmt.Sprintf("%d", flow.FlowID)),
-					Mchid:      core.String(o.merchantID),
+					Mchid:      core.String(o.config.MerchantID),
 				},
 			)
 			if err != nil {
@@ -170,10 +229,6 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 	}
 
 	return nil
-}
-
-func NewOrderEvent(merchantID string) *OrderEvent {
-	return &OrderEvent{merchantID: merchantID}
 }
 
 func (o *OrderEvent) RefundPayment(flow databases.PaymentFlow, db sqlx.DBExecutor) error {
