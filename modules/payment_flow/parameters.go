@@ -5,7 +5,7 @@ import (
 	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
+	"github.com/eden-w2w/wechatpay-go/services/payments/jsapi"
 )
 
 type CreatePaymentFlowParams struct {

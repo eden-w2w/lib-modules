@@ -8,8 +8,8 @@ import (
 	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
+	"github.com/eden-w2w/wechatpay-go/services/payments"
 	"github.com/sirupsen/logrus"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
 	"time"
 )
 
@@ -34,7 +34,10 @@ func GetController() *Controller {
 	return controller
 }
 
-func (c Controller) GetPaymentFlowByID(flowID uint64, db sqlx.DBExecutor, forUpdate bool) (model *databases.PaymentFlow, err error) {
+func (c Controller) GetPaymentFlowByID(flowID uint64, db sqlx.DBExecutor, forUpdate bool) (
+	model *databases.PaymentFlow,
+	err error,
+) {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
@@ -56,7 +59,10 @@ func (c Controller) GetPaymentFlowByID(flowID uint64, db sqlx.DBExecutor, forUpd
 	return
 }
 
-func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DBExecutor) (*databases.PaymentFlow, error) {
+func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DBExecutor) (
+	*databases.PaymentFlow,
+	error,
+) {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
@@ -82,7 +88,11 @@ func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DB
 	return model, nil
 }
 
-func (c Controller) GetPaymentFlows(params GetPaymentFlowsParams, withCount bool) (data []databases.PaymentFlow, total int, err error) {
+func (c Controller) GetPaymentFlows(params GetPaymentFlowsParams, withCount bool) (
+	data []databases.PaymentFlow,
+	total int,
+	err error,
+) {
 	model := databases.PaymentFlow{}
 	data, err = model.List(c.db, params.Conditions(), params.Additions()...)
 	if err != nil {
@@ -102,7 +112,11 @@ func (c Controller) GetPaymentFlows(params GetPaymentFlowsParams, withCount bool
 	return
 }
 
-func (c Controller) GetFlowByOrderIDAndStatus(orderID, userID uint64, status []enums.PaymentStatus, db sqlx.DBExecutor) ([]databases.PaymentFlow, error) {
+func (c Controller) GetFlowByOrderIDAndStatus(
+	orderID, userID uint64,
+	status []enums.PaymentStatus,
+	db sqlx.DBExecutor,
+) ([]databases.PaymentFlow, error) {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
@@ -113,7 +127,12 @@ func (c Controller) GetFlowByOrderIDAndStatus(orderID, userID uint64, status []e
 	model := &databases.PaymentFlow{}
 	models, err := model.BatchFetchByOrderAndStatus(db, orderID, status)
 	if err != nil {
-		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d", err, orderID, userID)
+		logrus.Errorf(
+			"[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d",
+			err,
+			orderID,
+			userID,
+		)
 		return nil, general_errors.InternalError
 	}
 
@@ -129,7 +148,11 @@ func (c Controller) GetFlowByOrderIDAndStatus(orderID, userID uint64, status []e
 	return models, nil
 }
 
-func (c Controller) MustGetFlowByOrderIDAndStatus(orderID, userID uint64, status []enums.PaymentStatus, db sqlx.DBExecutor) ([]databases.PaymentFlow, error) {
+func (c Controller) MustGetFlowByOrderIDAndStatus(
+	orderID, userID uint64,
+	status []enums.PaymentStatus,
+	db sqlx.DBExecutor,
+) ([]databases.PaymentFlow, error) {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
@@ -140,7 +163,12 @@ func (c Controller) MustGetFlowByOrderIDAndStatus(orderID, userID uint64, status
 	model := &databases.PaymentFlow{}
 	models, err := model.BatchFetchByOrderAndStatus(db, orderID, status)
 	if err != nil {
-		logrus.Errorf("[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d", err, orderID, userID)
+		logrus.Errorf(
+			"[GetFlowByOrderAndUserID] model.BatchFetchByOrderAndStatus err: %v, orderID: %d, userID: %d",
+			err,
+			orderID,
+			userID,
+		)
 		return nil, general_errors.InternalError
 	}
 
@@ -170,13 +198,23 @@ func (c Controller) UpdatePaymentFlowRemoteID(flowID uint64, prepayID string, db
 	}
 	err := model.UpdateByFlowIDWithMap(db, fields)
 	if err != nil {
-		logrus.Errorf("[UpdatePaymentFlowRemoteID] model.UpdateByFlowIDWithMap err: %v, flowID: %d, remoteID: %s", err, flowID, prepayID)
+		logrus.Errorf(
+			"[UpdatePaymentFlowRemoteID] model.UpdateByFlowIDWithMap err: %v, flowID: %d, remoteID: %s",
+			err,
+			flowID,
+			prepayID,
+		)
 		return general_errors.InternalError
 	}
 	return nil
 }
 
-func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status enums.PaymentStatus, trans *payments.Transaction, db sqlx.DBExecutor) error {
+func (c Controller) UpdatePaymentFlowStatus(
+	flow *databases.PaymentFlow,
+	status enums.PaymentStatus,
+	trans *payments.Transaction,
+	db sqlx.DBExecutor,
+) error {
 	if !c.isInit {
 		logrus.Panicf("[PaymentFlowController] not Init")
 	}
@@ -185,7 +223,11 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 	}
 
 	if !flow.Status.CheckNextStatusIsValid(status) {
-		logrus.Errorf("[UpdatePaymentFlowStatus] !flow.Status.CheckNextStatusIsValid(status), currentStatus: %s, nextStatus: %s", flow.Status, status)
+		logrus.Errorf(
+			"[UpdatePaymentFlowStatus] !flow.Status.CheckNextStatusIsValid(status), currentStatus: %s, nextStatus: %s",
+			flow.Status,
+			status,
+		)
 		return general_errors.PaymentFlowNotFound
 	}
 
@@ -195,7 +237,12 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 	if trans != nil {
 		transJson, err := trans.MarshalJSON()
 		if err != nil {
-			logrus.Errorf("[UpdatePaymentFlowSuccess] trans.MarshalJSON() err: %v, flowID: %d, status: %s", err, flow.FlowID, status.String())
+			logrus.Errorf(
+				"[UpdatePaymentFlowSuccess] trans.MarshalJSON() err: %v, flowID: %d, status: %s",
+				err,
+				flow.FlowID,
+				status.String(),
+			)
 			return general_errors.InternalError
 		}
 		fields["RemoteData"] = string(transJson)
@@ -203,7 +250,12 @@ func (c Controller) UpdatePaymentFlowStatus(flow *databases.PaymentFlow, status 
 
 	err := flow.UpdateByFlowIDWithMap(db, fields)
 	if err != nil {
-		logrus.Errorf("[UpdatePaymentFlowSuccess] model.UpdateByFlowIDWithMap err: %v, flowID: %d, status: %s", err, flow.FlowID, status.String())
+		logrus.Errorf(
+			"[UpdatePaymentFlowSuccess] model.UpdateByFlowIDWithMap err: %v, flowID: %d, status: %s",
+			err,
+			flow.FlowID,
+			status.String(),
+		)
 		return general_errors.InternalError
 	}
 	return nil

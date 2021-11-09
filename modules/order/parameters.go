@@ -18,7 +18,12 @@ type EventHandler interface {
 	OnOrderPaidEvent(db sqlx.DBExecutor, order *databases.Order, payment *databases.PaymentFlow) error
 	OnOrderConfirmEvent(db sqlx.DBExecutor, order *databases.Order) error
 	OnOrderDispatchEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics) error
-	OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics, goods []databases.OrderGoods) error
+	OnOrderCompleteEvent(
+		db sqlx.DBExecutor,
+		order *databases.Order,
+		logistics *databases.OrderLogistics,
+		goods []databases.OrderGoods,
+	) error
 	OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error
 }
 

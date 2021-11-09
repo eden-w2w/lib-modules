@@ -5,6 +5,14 @@ import (
 	"fmt"
 	errors "github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
+	"github.com/eden-w2w/wechatpay-go/core"
+	"github.com/eden-w2w/wechatpay-go/core/auth/verifiers"
+	"github.com/eden-w2w/wechatpay-go/core/downloader"
+	"github.com/eden-w2w/wechatpay-go/core/notify"
+	"github.com/eden-w2w/wechatpay-go/core/option"
+	"github.com/eden-w2w/wechatpay-go/services/payments"
+	"github.com/eden-w2w/wechatpay-go/services/payments/jsapi"
+	"github.com/eden-w2w/wechatpay-go/utils"
 	w "github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
 	"github.com/silenceper/wechat/v2/miniprogram"
@@ -14,14 +22,6 @@ import (
 	"github.com/silenceper/wechat/v2/miniprogram/qrcode"
 	"github.com/silenceper/wechat/v2/miniprogram/subscribe"
 	"github.com/sirupsen/logrus"
-	"github.com/wechatpay-apiv3/wechatpay-go/core"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/auth/verifiers"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/notify"
-	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
-	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 	"net/http"
 	"time"
 )
@@ -270,4 +270,22 @@ func (c Controller) SendSubscribeMessage(msg *subscribe.Message) error {
 		logrus.Warningf("[SendSubscribeMessage] c.program.GetSubscribe().Send err: %v, msg: %+v", err, msg)
 	}
 	return err
+}
+
+func (c Controller) GetTradeBill(req jsapi.TradeBillRequest) (*jsapi.BillResponse, error) {
+	resp, _, err := c.jsapiService.TradeBill(context.Background(), req)
+	if err != nil {
+		logrus.Errorf("[GetTradeBill] c.jsapiService.TradeBill err: %v, req: %+v", err, req)
+		return nil, errors.BadGateway
+	}
+	return resp, nil
+}
+
+func (c Controller) DownloadURL(bill jsapi.BillResponse) (data []byte, err error) {
+	data, _, err = c.jsapiService.DownloadURL(context.Background(), bill)
+	if err != nil {
+		logrus.Errorf("[DownloadURL] c.jsapiService.DownloadURL err: %v, req: %+v", err, bill)
+		return nil, errors.BadGateway
+	}
+	return
 }

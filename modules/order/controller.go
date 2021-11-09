@@ -254,6 +254,7 @@ func (c Controller) GetOrders(p GetOrdersParams, withCount bool) (orders []datab
 	}
 	return
 }
+
 func (c Controller) GetOrderLogistics(orderID uint64) (*databases.OrderLogistics, error) {
 	logistics := &databases.OrderLogistics{
 		OrderID: orderID,

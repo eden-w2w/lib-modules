@@ -12,10 +12,10 @@ import (
 	"github.com/eden-w2w/lib-modules/modules/user"
 	"github.com/eden-w2w/lib-modules/modules/wechat"
 	"github.com/eden-w2w/lib-modules/pkg/strings"
+	"github.com/eden-w2w/wechatpay-go/core"
+	"github.com/eden-w2w/wechatpay-go/services/payments/jsapi"
 	"github.com/silenceper/wechat/v2/miniprogram/subscribe"
 	"github.com/sirupsen/logrus"
-	"github.com/wechatpay-apiv3/wechatpay-go/core"
-	"github.com/wechatpay-apiv3/wechatpay-go/services/payments/jsapi"
 )
 
 type OrderEvent struct {
@@ -54,7 +54,11 @@ func (o *OrderEvent) OnOrderPaidEvent(
 	return nil
 }
 
-func (o *OrderEvent) OnOrderDispatchEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics) error {
+func (o *OrderEvent) OnOrderDispatchEvent(
+	db sqlx.DBExecutor,
+	order *databases.Order,
+	logistics *databases.OrderLogistics,
+) error {
 	msg := &subscribe.Message{
 		ToUser:     order.UserOpenID,
 		TemplateID: o.config.DispatchMessageTemplateID,
@@ -72,7 +76,12 @@ func (o *OrderEvent) OnOrderDispatchEvent(db sqlx.DBExecutor, order *databases.O
 	return nil
 }
 
-func (o *OrderEvent) OnOrderCompleteEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics, goods []databases.OrderGoods) error {
+func (o *OrderEvent) OnOrderCompleteEvent(
+	db sqlx.DBExecutor,
+	order *databases.Order,
+	logistics *databases.OrderLogistics,
+	goods []databases.OrderGoods,
+) error {
 	// 获取支付流水
 	flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(
 		order.OrderID,
