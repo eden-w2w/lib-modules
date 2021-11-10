@@ -75,6 +75,7 @@ func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DB
 		UserID:        params.UserID,
 		OrderID:       params.OrderID,
 		Amount:        params.Amount,
+		ActualAmount:  params.Amount,
 		PaymentMethod: params.PaymentMethod,
 		Status:        enums.PAYMENT_STATUS__CREATED,
 		ExpiredAt:     datatypes.MySQLTimestamp(time.Now().Add(c.paymentFlowExpiredIn)),
@@ -255,6 +256,36 @@ func (c Controller) UpdatePaymentFlowStatus(
 			err,
 			flow.FlowID,
 			status.String(),
+		)
+		return general_errors.InternalError
+	}
+	return nil
+}
+
+func (c Controller) UpdatePaymentFlowAmount(flowID, discountAmount, actualAmount uint64, db sqlx.DBExecutor) error {
+	if !c.isInit {
+		logrus.Panicf("[PaymentFlowController] not Init")
+	}
+	if db == nil {
+		db = c.db
+	}
+
+	model := &databases.PaymentFlow{
+		FlowID: flowID,
+	}
+	fields := builder.FieldValues{
+		model.FieldKeyDiscountAmount(): discountAmount,
+		model.FieldKeyActualAmount():   actualAmount,
+	}
+
+	err := model.UpdateByFlowIDWithMap(db, fields)
+	if err != nil {
+		logrus.Errorf(
+			"[UpdatePaymentFlowAmount] model.UpdateByFlowIDWithMap err: %v, flowID: %d, discountAmount: %d, actualAmount: %d",
+			err,
+			model.FlowID,
+			discountAmount,
+			actualAmount,
 		)
 		return general_errors.InternalError
 	}

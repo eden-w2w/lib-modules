@@ -7,32 +7,19 @@ import (
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
-	github_com_eden_w2_w_lib_modules_constants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
-func (PaymentFlow) PrimaryKey() []string {
+func (RefundFlow) PrimaryKey() []string {
 	return []string{
 		"ID",
 	}
 }
 
-func (PaymentFlow) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
-	return github_com_eden_framework_sqlx_builder.Indexes{
-		"I_expire": []string{
-			"ExpiredAt",
-		},
-		"I_order_id": []string{
-			"OrderID",
-			"Status",
-		},
-	}
-}
-
-func (PaymentFlow) UniqueIndexUFlowID() string {
+func (RefundFlow) UniqueIndexUFlowID() string {
 	return "U_flow_id"
 }
 
-func (PaymentFlow) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
+func (RefundFlow) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
 	return github_com_eden_framework_sqlx_builder.Indexes{
 		"U_flow_id": []string{
 			"FlowID",
@@ -41,216 +28,189 @@ func (PaymentFlow) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexe
 	}
 }
 
-func (PaymentFlow) Comments() map[string]string {
+func (RefundFlow) Comments() map[string]string {
 	return map[string]string{
-		"ActualAmount":   "实际支付金额",
-		"Amount":         "支付金额",
-		"DiscountAmount": "优惠金额",
-		"ExpiredAt":      "超时时间",
-		"FlowID":         "流水ID",
-		"OrderID":        "关联订单号",
-		"PaymentMethod":  "支付方式",
-		"RemoteData":     "支付系统回调原始报文",
-		"RemoteFlowID":   "支付系统流水号",
-		"Status":         "支付状态",
-		"UserID":         "用户ID",
+		"Account":             "退款账户",
+		"Channel":             "退款渠道",
+		"FlowID":              "业务ID",
+		"PaymentFlowID":       "交易单号",
+		"RefundAmount":        "退款总额",
+		"RemoteFlowID":        "支付系统退款单号",
+		"RemotePaymentFlowID": "支付系统交易单号",
+		"Status":              "退款状态",
+		"TotalAmount":         "交易总额",
 	}
 }
 
-var PaymentFlowTable *github_com_eden_framework_sqlx_builder.Table
+var RefundFlowTable *github_com_eden_framework_sqlx_builder.Table
 
 func init() {
-	PaymentFlowTable = Config.DB.Register(&PaymentFlow{})
+	RefundFlowTable = Config.DB.Register(&RefundFlow{})
 }
 
-type PaymentFlowIterator struct {
+type RefundFlowIterator struct {
 }
 
-func (PaymentFlowIterator) New() interface{} {
-	return &PaymentFlow{}
+func (RefundFlowIterator) New() interface{} {
+	return &RefundFlow{}
 }
 
-func (PaymentFlowIterator) Resolve(v interface{}) *PaymentFlow {
-	return v.(*PaymentFlow)
+func (RefundFlowIterator) Resolve(v interface{}) *RefundFlow {
+	return v.(*RefundFlow)
 }
 
-func (PaymentFlow) TableName() string {
-	return "t_payment_flow"
+func (RefundFlow) TableName() string {
+	return "t_refund_flow"
 }
 
-func (PaymentFlow) ColDescriptions() map[string][]string {
+func (RefundFlow) ColDescriptions() map[string][]string {
 	return map[string][]string{
-		"ActualAmount": []string{
-			"实际支付金额",
+		"Account": []string{
+			"退款账户",
 		},
-		"Amount": []string{
-			"支付金额",
-		},
-		"DiscountAmount": []string{
-			"优惠金额",
-		},
-		"ExpiredAt": []string{
-			"超时时间",
+		"Channel": []string{
+			"退款渠道",
 		},
 		"FlowID": []string{
-			"流水ID",
+			"业务ID",
 		},
-		"OrderID": []string{
-			"关联订单号",
+		"PaymentFlowID": []string{
+			"交易单号",
 		},
-		"PaymentMethod": []string{
-			"支付方式",
-		},
-		"RemoteData": []string{
-			"支付系统回调原始报文",
+		"RefundAmount": []string{
+			"退款总额",
 		},
 		"RemoteFlowID": []string{
-			"支付系统流水号",
+			"支付系统退款单号",
+		},
+		"RemotePaymentFlowID": []string{
+			"支付系统交易单号",
 		},
 		"Status": []string{
-			"支付状态",
+			"退款状态",
 		},
-		"UserID": []string{
-			"用户ID",
+		"TotalAmount": []string{
+			"交易总额",
 		},
 	}
 }
 
-func (PaymentFlow) FieldKeyID() string {
+func (RefundFlow) FieldKeyID() string {
 	return "ID"
 }
 
-func (m *PaymentFlow) FieldID() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyID())
+func (m *RefundFlow) FieldID() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyID())
 }
 
-func (PaymentFlow) FieldKeyFlowID() string {
+func (RefundFlow) FieldKeyFlowID() string {
 	return "FlowID"
 }
 
-func (m *PaymentFlow) FieldFlowID() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyFlowID())
+func (m *RefundFlow) FieldFlowID() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyFlowID())
 }
 
-func (PaymentFlow) FieldKeyUserID() string {
-	return "UserID"
-}
-
-func (m *PaymentFlow) FieldUserID() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyUserID())
-}
-
-func (PaymentFlow) FieldKeyOrderID() string {
-	return "OrderID"
-}
-
-func (m *PaymentFlow) FieldOrderID() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyOrderID())
-}
-
-func (PaymentFlow) FieldKeyAmount() string {
-	return "Amount"
-}
-
-func (m *PaymentFlow) FieldAmount() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyAmount())
-}
-
-func (PaymentFlow) FieldKeyDiscountAmount() string {
-	return "DiscountAmount"
-}
-
-func (m *PaymentFlow) FieldDiscountAmount() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyDiscountAmount())
-}
-
-func (PaymentFlow) FieldKeyActualAmount() string {
-	return "ActualAmount"
-}
-
-func (m *PaymentFlow) FieldActualAmount() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyActualAmount())
-}
-
-func (PaymentFlow) FieldKeyPaymentMethod() string {
-	return "PaymentMethod"
-}
-
-func (m *PaymentFlow) FieldPaymentMethod() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyPaymentMethod())
-}
-
-func (PaymentFlow) FieldKeyRemoteFlowID() string {
+func (RefundFlow) FieldKeyRemoteFlowID() string {
 	return "RemoteFlowID"
 }
 
-func (m *PaymentFlow) FieldRemoteFlowID() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyRemoteFlowID())
+func (m *RefundFlow) FieldRemoteFlowID() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyRemoteFlowID())
 }
 
-func (PaymentFlow) FieldKeyStatus() string {
+func (RefundFlow) FieldKeyPaymentFlowID() string {
+	return "PaymentFlowID"
+}
+
+func (m *RefundFlow) FieldPaymentFlowID() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyPaymentFlowID())
+}
+
+func (RefundFlow) FieldKeyRemotePaymentFlowID() string {
+	return "RemotePaymentFlowID"
+}
+
+func (m *RefundFlow) FieldRemotePaymentFlowID() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyRemotePaymentFlowID())
+}
+
+func (RefundFlow) FieldKeyChannel() string {
+	return "Channel"
+}
+
+func (m *RefundFlow) FieldChannel() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyChannel())
+}
+
+func (RefundFlow) FieldKeyAccount() string {
+	return "Account"
+}
+
+func (m *RefundFlow) FieldAccount() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyAccount())
+}
+
+func (RefundFlow) FieldKeyStatus() string {
 	return "Status"
 }
 
-func (m *PaymentFlow) FieldStatus() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyStatus())
+func (m *RefundFlow) FieldStatus() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyStatus())
 }
 
-func (PaymentFlow) FieldKeyExpiredAt() string {
-	return "ExpiredAt"
+func (RefundFlow) FieldKeyTotalAmount() string {
+	return "TotalAmount"
 }
 
-func (m *PaymentFlow) FieldExpiredAt() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyExpiredAt())
+func (m *RefundFlow) FieldTotalAmount() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyTotalAmount())
 }
 
-func (PaymentFlow) FieldKeyRemoteData() string {
-	return "RemoteData"
+func (RefundFlow) FieldKeyRefundAmount() string {
+	return "RefundAmount"
 }
 
-func (m *PaymentFlow) FieldRemoteData() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyRemoteData())
+func (m *RefundFlow) FieldRefundAmount() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyRefundAmount())
 }
 
-func (PaymentFlow) FieldKeyCreatedAt() string {
+func (RefundFlow) FieldKeyCreatedAt() string {
 	return "CreatedAt"
 }
 
-func (m *PaymentFlow) FieldCreatedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyCreatedAt())
+func (m *RefundFlow) FieldCreatedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyCreatedAt())
 }
 
-func (PaymentFlow) FieldKeyUpdatedAt() string {
+func (RefundFlow) FieldKeyUpdatedAt() string {
 	return "UpdatedAt"
 }
 
-func (m *PaymentFlow) FieldUpdatedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyUpdatedAt())
+func (m *RefundFlow) FieldUpdatedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyUpdatedAt())
 }
 
-func (PaymentFlow) FieldKeyDeletedAt() string {
+func (RefundFlow) FieldKeyDeletedAt() string {
 	return "DeletedAt"
 }
 
-func (m *PaymentFlow) FieldDeletedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return PaymentFlowTable.F(m.FieldKeyDeletedAt())
+func (m *RefundFlow) FieldDeletedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return RefundFlowTable.F(m.FieldKeyDeletedAt())
 }
 
-func (PaymentFlow) ColRelations() map[string][]string {
+func (RefundFlow) ColRelations() map[string][]string {
 	return map[string][]string{}
 }
 
-func (m *PaymentFlow) IndexFieldNames() []string {
+func (m *RefundFlow) IndexFieldNames() []string {
 	return []string{
-		"ExpiredAt",
 		"FlowID",
 		"ID",
-		"OrderID",
-		"Status",
 	}
 }
 
-func (m *PaymentFlow) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) github_com_eden_framework_sqlx_builder.SqlCondition {
+func (m *RefundFlow) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) github_com_eden_framework_sqlx_builder.SqlCondition {
 	table := db.T(m)
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m)
 
@@ -277,7 +237,7 @@ func (m *PaymentFlow) ConditionByStruct(db github_com_eden_framework_sqlx.DBExec
 	return condition
 }
 
-func (m *PaymentFlow) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	if m.CreatedAt.IsZero() {
 		m.CreatedAt = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -292,7 +252,7 @@ func (m *PaymentFlow) Create(db github_com_eden_framework_sqlx.DBExecutor) error
 
 }
 
-func (m *PaymentFlow) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_sqlx.DBExecutor, updateFields []string) error {
+func (m *RefundFlow) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_sqlx.DBExecutor, updateFields []string) error {
 
 	if len(updateFields) == 0 {
 		panic(fmt.Errorf("must have update fields"))
@@ -362,21 +322,21 @@ func (m *PaymentFlow) CreateOnDuplicateWithUpdateFields(db github_com_eden_frame
 
 }
 
-func (m *PaymentFlow) DeleteByStruct(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) DeleteByStruct(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	_, err := db.ExecExpr(
 		github_com_eden_framework_sqlx_builder.Delete().
 			From(
 				db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(m.ConditionByStruct(db)),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.DeleteByStruct"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.DeleteByStruct"),
 			),
 	)
 
 	return err
 }
 
-func (m *PaymentFlow) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -388,7 +348,7 @@ func (m *PaymentFlow) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) er
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.FetchByID"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.FetchByID"),
 			),
 		m,
 	)
@@ -396,7 +356,7 @@ func (m *PaymentFlow) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) er
 	return err
 }
 
-func (m *PaymentFlow) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
+func (m *RefundFlow) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
 
 	if _, ok := fieldValues["UpdatedAt"]; !ok {
 		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -411,7 +371,7 @@ func (m *PaymentFlow) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExec
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.UpdateByIDWithMap"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.UpdateByIDWithMap"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -429,14 +389,14 @@ func (m *PaymentFlow) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExec
 
 }
 
-func (m *PaymentFlow) UpdateByIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
+func (m *RefundFlow) UpdateByIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
 
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
 	return m.UpdateByIDWithMap(db, fieldValues)
 
 }
 
-func (m *PaymentFlow) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -449,7 +409,7 @@ func (m *PaymentFlow) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExe
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
 				github_com_eden_framework_sqlx_builder.ForUpdate(),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.FetchByIDForUpdate"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.FetchByIDForUpdate"),
 			),
 		m,
 	)
@@ -457,7 +417,7 @@ func (m *PaymentFlow) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExe
 	return err
 }
 
-func (m *PaymentFlow) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -468,13 +428,13 @@ func (m *PaymentFlow) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) e
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.DeleteByID"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.DeleteByID"),
 			))
 
 	return err
 }
 
-func (m *PaymentFlow) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -494,7 +454,7 @@ func (m *PaymentFlow) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecuto
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.SoftDeleteByID"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.SoftDeleteByID"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -503,7 +463,7 @@ func (m *PaymentFlow) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecuto
 
 }
 
-func (m *PaymentFlow) FetchByFlowID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) FetchByFlowID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -515,7 +475,7 @@ func (m *PaymentFlow) FetchByFlowID(db github_com_eden_framework_sqlx.DBExecutor
 					table.F("FlowID").Eq(m.FlowID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.FetchByFlowID"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.FetchByFlowID"),
 			),
 		m,
 	)
@@ -523,7 +483,7 @@ func (m *PaymentFlow) FetchByFlowID(db github_com_eden_framework_sqlx.DBExecutor
 	return err
 }
 
-func (m *PaymentFlow) UpdateByFlowIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
+func (m *RefundFlow) UpdateByFlowIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
 
 	if _, ok := fieldValues["UpdatedAt"]; !ok {
 		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -538,7 +498,7 @@ func (m *PaymentFlow) UpdateByFlowIDWithMap(db github_com_eden_framework_sqlx.DB
 					table.F("FlowID").Eq(m.FlowID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.UpdateByFlowIDWithMap"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.UpdateByFlowIDWithMap"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -556,14 +516,14 @@ func (m *PaymentFlow) UpdateByFlowIDWithMap(db github_com_eden_framework_sqlx.DB
 
 }
 
-func (m *PaymentFlow) UpdateByFlowIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
+func (m *RefundFlow) UpdateByFlowIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
 
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
 	return m.UpdateByFlowIDWithMap(db, fieldValues)
 
 }
 
-func (m *PaymentFlow) FetchByFlowIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) FetchByFlowIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -576,7 +536,7 @@ func (m *PaymentFlow) FetchByFlowIDForUpdate(db github_com_eden_framework_sqlx.D
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
 				github_com_eden_framework_sqlx_builder.ForUpdate(),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.FetchByFlowIDForUpdate"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.FetchByFlowIDForUpdate"),
 			),
 		m,
 	)
@@ -584,7 +544,7 @@ func (m *PaymentFlow) FetchByFlowIDForUpdate(db github_com_eden_framework_sqlx.D
 	return err
 }
 
-func (m *PaymentFlow) DeleteByFlowID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) DeleteByFlowID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -595,13 +555,13 @@ func (m *PaymentFlow) DeleteByFlowID(db github_com_eden_framework_sqlx.DBExecuto
 					table.F("FlowID").Eq(m.FlowID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.DeleteByFlowID"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.DeleteByFlowID"),
 			))
 
 	return err
 }
 
-func (m *PaymentFlow) SoftDeleteByFlowID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *RefundFlow) SoftDeleteByFlowID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -621,7 +581,7 @@ func (m *PaymentFlow) SoftDeleteByFlowID(db github_com_eden_framework_sqlx.DBExe
 					table.F("FlowID").Eq(m.FlowID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.SoftDeleteByFlowID"),
+				github_com_eden_framework_sqlx_builder.Comment("RefundFlow.SoftDeleteByFlowID"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -630,9 +590,9 @@ func (m *PaymentFlow) SoftDeleteByFlowID(db github_com_eden_framework_sqlx.DBExe
 
 }
 
-func (m *PaymentFlow) List(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) ([]PaymentFlow, error) {
+func (m *RefundFlow) List(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) ([]RefundFlow, error) {
 
-	list := make([]PaymentFlow, 0)
+	list := make([]RefundFlow, 0)
 
 	table := db.T(m)
 	_ = table
@@ -641,7 +601,7 @@ func (m *PaymentFlow) List(db github_com_eden_framework_sqlx.DBExecutor, conditi
 
 	finalAdditions := []github_com_eden_framework_sqlx_builder.Addition{
 		github_com_eden_framework_sqlx_builder.Where(condition),
-		github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.List"),
+		github_com_eden_framework_sqlx_builder.Comment("RefundFlow.List"),
 	}
 
 	if len(additions) > 0 {
@@ -658,7 +618,7 @@ func (m *PaymentFlow) List(db github_com_eden_framework_sqlx.DBExecutor, conditi
 
 }
 
-func (m *PaymentFlow) Count(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) (int, error) {
+func (m *RefundFlow) Count(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) (int, error) {
 
 	count := -1
 
@@ -669,7 +629,7 @@ func (m *PaymentFlow) Count(db github_com_eden_framework_sqlx.DBExecutor, condit
 
 	finalAdditions := []github_com_eden_framework_sqlx_builder.Addition{
 		github_com_eden_framework_sqlx_builder.Where(condition),
-		github_com_eden_framework_sqlx_builder.Comment("PaymentFlow.Count"),
+		github_com_eden_framework_sqlx_builder.Comment("RefundFlow.Count"),
 	}
 
 	if len(additions) > 0 {
@@ -688,21 +648,7 @@ func (m *PaymentFlow) Count(db github_com_eden_framework_sqlx.DBExecutor, condit
 
 }
 
-func (m *PaymentFlow) BatchFetchByExpiredAtList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_framework_sqlx_datatypes.Timestamp) ([]PaymentFlow, error) {
-
-	if len(values) == 0 {
-		return nil, nil
-	}
-
-	table := db.T(m)
-
-	condition := table.F("ExpiredAt").In(values)
-
-	return m.List(db, condition)
-
-}
-
-func (m *PaymentFlow) BatchFetchByFlowIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]PaymentFlow, error) {
+func (m *RefundFlow) BatchFetchByFlowIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]RefundFlow, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -716,7 +662,7 @@ func (m *PaymentFlow) BatchFetchByFlowIDList(db github_com_eden_framework_sqlx.D
 
 }
 
-func (m *PaymentFlow) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]PaymentFlow, error) {
+func (m *RefundFlow) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]RefundFlow, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -725,34 +671,6 @@ func (m *PaymentFlow) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExe
 	table := db.T(m)
 
 	condition := table.F("ID").In(values)
-
-	return m.List(db, condition)
-
-}
-
-func (m *PaymentFlow) BatchFetchByOrderIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]PaymentFlow, error) {
-
-	if len(values) == 0 {
-		return nil, nil
-	}
-
-	table := db.T(m)
-
-	condition := table.F("OrderID").In(values)
-
-	return m.List(db, condition)
-
-}
-
-func (m *PaymentFlow) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.PaymentStatus) ([]PaymentFlow, error) {
-
-	if len(values) == 0 {
-		return nil, nil
-	}
-
-	table := db.T(m)
-
-	condition := table.F("Status").In(values)
 
 	return m.List(db, condition)
 

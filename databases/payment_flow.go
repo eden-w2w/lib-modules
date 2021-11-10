@@ -24,6 +24,10 @@ type PaymentFlow struct {
 	OrderID uint64 `json:"orderID,string" db:"f_order_id"`
 	// 支付金额
 	Amount uint64 `json:"amount" db:"f_amount"`
+	// 优惠金额
+	DiscountAmount uint64 `json:"discountAmount" db:"f_discount_amount,default=0"`
+	// 实际支付金额
+	ActualAmount uint64 `json:"actualAmount" db:"f_actual_amount,default=0"`
 	// 支付方式
 	PaymentMethod enums.PaymentMethod `json:"paymentMethod" db:"f_payment_method"`
 	// 支付系统流水号
