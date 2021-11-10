@@ -7,11 +7,20 @@ import (
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
+	github_com_eden_w2_w_lib_modules_constants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 func (TaskFlow) PrimaryKey() []string {
 	return []string{
 		"ID",
+	}
+}
+
+func (TaskFlow) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
+	return github_com_eden_framework_sqlx_builder.Indexes{
+		"I_type": []string{
+			"Type",
+		},
 	}
 }
 
@@ -36,6 +45,7 @@ func (TaskFlow) Comments() map[string]string {
 		"Name":      "任务名称",
 		"StartedAt": "任务开始时间",
 		"Status":    "任务执行状态",
+		"Type":      "任务类型",
 	}
 }
 
@@ -79,6 +89,9 @@ func (TaskFlow) ColDescriptions() map[string][]string {
 		},
 		"Status": []string{
 			"任务执行状态",
+		},
+		"Type": []string{
+			"任务类型",
 		},
 	}
 }
@@ -139,6 +152,14 @@ func (m *TaskFlow) FieldMessage() *github_com_eden_framework_sqlx_builder.Column
 	return TaskFlowTable.F(m.FieldKeyMessage())
 }
 
+func (TaskFlow) FieldKeyType() string {
+	return "Type"
+}
+
+func (m *TaskFlow) FieldType() *github_com_eden_framework_sqlx_builder.Column {
+	return TaskFlowTable.F(m.FieldKeyType())
+}
+
 func (TaskFlow) FieldKeyCreatedAt() string {
 	return "CreatedAt"
 }
@@ -171,6 +192,7 @@ func (m *TaskFlow) IndexFieldNames() []string {
 	return []string{
 		"FlowID",
 		"ID",
+		"Type",
 	}
 }
 
@@ -635,6 +657,20 @@ func (m *TaskFlow) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecut
 	table := db.T(m)
 
 	condition := table.F("ID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *TaskFlow) BatchFetchByTypeList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.TaskType) ([]TaskFlow, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("Type").In(values)
 
 	return m.List(db, condition)
 

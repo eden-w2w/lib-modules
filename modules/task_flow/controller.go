@@ -45,6 +45,7 @@ func (c Controller) CreateTaskFlow(params CreateTaskFlowParams, db sqlx.DBExecut
 		Name:      params.Name,
 		StartedAt: datatypes.MySQLTimestamp(time.Now()),
 		Status:    enums.TASK_PROCESS_STATUS__CREATED,
+		Type:      params.Type,
 	}
 	err := model.Create(db)
 	if err != nil {
@@ -83,7 +84,11 @@ func (c Controller) UpdateTaskFlow(id uint64, params UpdateTaskParams) error {
 	return err
 }
 
-func (c Controller) GetTaskFlows(params GetTaskParams, withCount bool) (data []databases.TaskFlow, total int, err error) {
+func (c Controller) GetTaskFlows(params GetTaskParams, withCount bool) (
+	data []databases.TaskFlow,
+	total int,
+	err error,
+) {
 	model := &databases.TaskFlow{}
 	data, err = model.List(c.db, params.Conditions(), params.Additions()...)
 	if err != nil {

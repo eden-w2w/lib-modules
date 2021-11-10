@@ -52,33 +52,44 @@ func (c *Controller) RunTaskSettlement(settlementName string) (err error) {
 	}
 
 	logrus.Infof("[TaskSettlement] start settlement for %s", settlementName)
-	task, _ := task_flow.GetController().CreateTaskFlow(task_flow.CreateTaskFlowParams{Name: settlementName}, nil)
+	task, _ := task_flow.GetController().CreateTaskFlow(
+		task_flow.CreateTaskFlowParams{
+			Name: settlementName,
+			Type: enums.TASK_TYPE__SETTLEMENT,
+		}, nil,
+	)
 	defer func() {
 		if task != nil {
 			if err != nil {
-				_ = task_flow.GetController().UpdateTaskFlow(task.FlowID, task_flow.UpdateTaskParams{
-					EndedAt: datatypes.MySQLTimestamp(time.Now()),
-					Status:  enums.TASK_PROCESS_STATUS__FAIL,
-					Message: err.Error(),
-				})
+				_ = task_flow.GetController().UpdateTaskFlow(
+					task.FlowID, task_flow.UpdateTaskParams{
+						EndedAt: datatypes.MySQLTimestamp(time.Now()),
+						Status:  enums.TASK_PROCESS_STATUS__FAIL,
+						Message: err.Error(),
+					},
+				)
 			} else {
-				_ = task_flow.GetController().UpdateTaskFlow(task.FlowID, task_flow.UpdateTaskParams{
-					EndedAt: datatypes.MySQLTimestamp(time.Now()),
-					Status:  enums.TASK_PROCESS_STATUS__COMPLETE,
-				})
+				_ = task_flow.GetController().UpdateTaskFlow(
+					task.FlowID, task_flow.UpdateTaskParams{
+						EndedAt: datatypes.MySQLTimestamp(time.Now()),
+						Status:  enums.TASK_PROCESS_STATUS__COMPLETE,
+					},
+				)
 			}
 		}
 
 		logrus.Infof("[TaskSettlement] complete settlement for %s", settlementName)
 	}()
 
-	list, _, err := promotion_flow.GetController().GetPromotionFlows(promotion_flow.GetPromotionFlowParams{
-		IsNotSettlement: datatypes.BOOL_TRUE,
-		CreateLt:        datatypes.MySQLTimestamp(time.Now().Add(-c.config.SettlementDuration)),
-		Pagination: modules.Pagination{
-			Size: -1,
-		},
-	}, false)
+	list, _, err := promotion_flow.GetController().GetPromotionFlows(
+		promotion_flow.GetPromotionFlowParams{
+			IsNotSettlement: datatypes.BOOL_TRUE,
+			CreateLt:        datatypes.MySQLTimestamp(time.Now().Add(-c.config.SettlementDuration)),
+			Pagination: modules.Pagination{
+				Size: -1,
+			},
+		}, false,
+	)
 
 	if err != nil {
 		logrus.Errorf("[TaskSettlement] promotion_flow.GetController().GetPromotionFlows err: %v", err)
@@ -104,33 +115,39 @@ func (c *Controller) RunTaskSettlement(settlementName string) (err error) {
 		settlements[flow.UserID].params.TotalSales += flow.Amount
 		settlements[flow.UserID].params.Proportion = c.config.GetProportion(settlements[flow.UserID].params.TotalSales)
 		settlements[flow.UserID].params.Amount = uint64(
-			float64(settlements[flow.UserID].params.TotalSales) * settlements[flow.UserID].params.Proportion)
+			float64(settlements[flow.UserID].params.TotalSales) * settlements[flow.UserID].params.Proportion,
+		)
 		*settlements[flow.UserID].flowIDs = append(*settlements[flow.UserID].flowIDs, flow.FlowID)
 	}
 
 	tx := sqlx.NewTasks(c.db)
-	tx = tx.With(func(db sqlx.DBExecutor) error {
-		for _, m := range settlements {
-			s, err := c.CreateSettlement(*m.params, db)
-			if err != nil {
-				return err
-			}
-
-			for _, flowID := range *m.flowIDs {
-				err = promotion_flow.GetController().UpdatePromotionSettlements(flowID, s.SettlementID, db)
+	tx = tx.With(
+		func(db sqlx.DBExecutor) error {
+			for _, m := range settlements {
+				s, err := c.CreateSettlement(*m.params, db)
 				if err != nil {
 					return err
 				}
+
+				for _, flowID := range *m.flowIDs {
+					err = promotion_flow.GetController().UpdatePromotionSettlements(flowID, s.SettlementID, db)
+					if err != nil {
+						return err
+					}
+				}
 			}
-		}
-		return nil
-	})
+			return nil
+		},
+	)
 
 	err = tx.Do()
 	return
 }
 
-func (c Controller) GetSettlementFlows(params GetSettlementFlowsParams, withCount bool) (data []databases.SettlementFlow, count int, err error) {
+func (c Controller) GetSettlementFlows(
+	params GetSettlementFlowsParams,
+	withCount bool,
+) (data []databases.SettlementFlow, count int, err error) {
 	if !c.isInit {
 		logrus.Panicf("[SettlementFlowController] not Init")
 	}
@@ -150,7 +167,11 @@ func (c Controller) GetSettlementFlows(params GetSettlementFlowsParams, withCoun
 	return
 }
 
-func (c Controller) GetSettlementByID(settlementID uint64, db sqlx.DBExecutor, forUpdate bool) (model *databases.SettlementFlow, err error) {
+func (c Controller) GetSettlementByID(
+	settlementID uint64,
+	db sqlx.DBExecutor,
+	forUpdate bool,
+) (model *databases.SettlementFlow, err error) {
 	if !c.isInit {
 		logrus.Panicf("[SettlementFlowController] not Init")
 	}
@@ -167,7 +188,12 @@ func (c Controller) GetSettlementByID(settlementID uint64, db sqlx.DBExecutor, f
 		if sqlx.DBErr(err).IsNotFound() {
 			return nil, general_errors.SettlementFlowNotFound
 		}
-		logrus.Errorf("[GetSettlementByID] model.FetchBySettlementID err: %v, settlementID: %d, forUpdate: %v", err, settlementID, forUpdate)
+		logrus.Errorf(
+			"[GetSettlementByID] model.FetchBySettlementID err: %v, settlementID: %d, forUpdate: %v",
+			err,
+			settlementID,
+			forUpdate,
+		)
 		return nil, general_errors.InternalError
 	}
 	return
@@ -189,7 +215,10 @@ func (c Controller) GetPromotionSettlementAmount(flows []databases.PromotionFlow
 	return
 }
 
-func (c Controller) CreateSettlement(params CreateSettlementParams, db sqlx.DBExecutor) (*databases.SettlementFlow, error) {
+func (c Controller) CreateSettlement(params CreateSettlementParams, db sqlx.DBExecutor) (
+	*databases.SettlementFlow,
+	error,
+) {
 	if !c.isInit {
 		logrus.Panicf("[SettlementFlowController] not Init")
 	}
@@ -216,7 +245,11 @@ func (c Controller) CreateSettlement(params CreateSettlementParams, db sqlx.DBEx
 	return model, nil
 }
 
-func (c Controller) UpdateSettlement(model *databases.SettlementFlow, params UpdateSettlementParams, db sqlx.DBExecutor) error {
+func (c Controller) UpdateSettlement(
+	model *databases.SettlementFlow,
+	params UpdateSettlementParams,
+	db sqlx.DBExecutor,
+) error {
 	if !c.isInit {
 		logrus.Panicf("[SettlementFlowController] not Init")
 	}

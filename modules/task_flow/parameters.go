@@ -11,6 +11,8 @@ import (
 type CreateTaskFlowParams struct {
 	// 任务名称
 	Name string `json:"name"`
+	// 任务类型
+	Type enums.TaskType `json:"type"`
 }
 
 type UpdateTaskParams struct {

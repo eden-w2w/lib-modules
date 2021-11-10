@@ -9,6 +9,7 @@ import (
 //go:generate eden generate tag TaskFlow --defaults=true
 // @def primary ID
 // @def unique_index U_task_flow_id FlowID
+// @def index I_type Type
 type TaskFlow struct {
 	datatypes.PrimaryID
 	// 业务ID
@@ -23,6 +24,8 @@ type TaskFlow struct {
 	Status enums.TaskProcessStatus `json:"status" db:"f_status"`
 	// 任务上报信息
 	Message string `json:"message" db:"f_message,null,size=65535"`
+	// 任务类型
+	Type enums.TaskType `json:"type" db:"f_type"`
 
 	datatypes.OperateTime
 }
