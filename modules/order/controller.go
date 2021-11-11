@@ -320,21 +320,23 @@ func (c Controller) updateOrderStatus(db sqlx.DBExecutor, order *databases.Order
 	return nil
 }
 
-func (c Controller) updateOrderDiscount(db sqlx.DBExecutor, order *databases.Order, discountAmount uint64) error {
-	if order.DiscountAmount == discountAmount {
+func (c Controller) updateOrderDiscount(db sqlx.DBExecutor, order *databases.Order, params UpdateOrderParams) error {
+	if order.DiscountAmount == params.DiscountAmount {
 		return nil
 	}
 	if order.Status != enums.ORDER_STATUS__CREATED {
-		return general_errors.NotAllowedChangeAmount
+		if params.Status != enums.ORDER_STATUS__PAID {
+			return general_errors.NotAllowedChangeAmount
+		}
 	}
-	if discountAmount > order.TotalPrice {
+	if params.DiscountAmount > order.TotalPrice {
 		return general_errors.DiscountAmountOverflow
 	}
 
-	order.DiscountAmount = discountAmount
-	order.ActualAmount = order.TotalPrice - discountAmount
+	order.DiscountAmount = params.DiscountAmount
+	order.ActualAmount = order.TotalPrice - params.DiscountAmount
 	f := builder.FieldValues{
-		"DiscountAmount": discountAmount,
+		"DiscountAmount": params.DiscountAmount,
 		"ActualAmount":   order.ActualAmount,
 	}
 	err := order.UpdateByIDWithMap(db, f)
@@ -343,7 +345,7 @@ func (c Controller) updateOrderDiscount(db sqlx.DBExecutor, order *databases.Ord
 			"[updateOrderDiscount] order.UpdateByIDWithMap err: %v, orderID: %d, discount: %d",
 			err,
 			order.OrderID,
-			discountAmount,
+			params.DiscountAmount,
 		)
 		return general_errors.InternalError
 	}
@@ -634,26 +636,9 @@ func (c Controller) UpdateOrder(
 	if db == nil {
 		db = c.db
 	}
-	orderStatus := order.Status
-	if params.Status != enums.ORDER_STATUS_UNKNOWN && params.Status != enums.ORDER_STATUS__CLOSED {
-		if err = c.updateOrderStatus(db, order, params.Status); err != nil {
-			return err
-		}
-	}
+
 	if params.DiscountAmount != 0 {
-		if err = c.updateOrderDiscount(db, order, params.DiscountAmount); err != nil {
-			return err
-		}
-	}
-	if params.Recipients != "" || params.ShippingAddr != "" || params.Mobile != "" {
-		if err = c.updateOrderLogistics(
-			db,
-			order,
-			logistics,
-			params.Recipients,
-			params.ShippingAddr,
-			params.Mobile,
-		); err != nil {
+		if err = c.updateOrderDiscount(db, order, params); err != nil {
 			return err
 		}
 	}
@@ -672,6 +657,26 @@ func (c Controller) UpdateOrder(
 
 	if len(params.Goods) > 0 {
 		if err = c.updateOrderGoods(db, order, orderGoods, params.Goods, locker, unlocker); err != nil {
+			return err
+		}
+	}
+
+	if params.Recipients != "" || params.ShippingAddr != "" || params.Mobile != "" {
+		if err = c.updateOrderLogistics(
+			db,
+			order,
+			logistics,
+			params.Recipients,
+			params.ShippingAddr,
+			params.Mobile,
+		); err != nil {
+			return err
+		}
+	}
+
+	orderStatus := order.Status
+	if params.Status != enums.ORDER_STATUS_UNKNOWN && params.Status != enums.ORDER_STATUS__CLOSED {
+		if err = c.updateOrderStatus(db, order, params.Status); err != nil {
 			return err
 		}
 	}
