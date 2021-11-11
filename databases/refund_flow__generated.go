@@ -7,11 +7,25 @@ import (
 	github_com_eden_framework_sqlx "github.com/eden-framework/sqlx"
 	github_com_eden_framework_sqlx_builder "github.com/eden-framework/sqlx/builder"
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
+	github_com_eden_w2_w_lib_modules_constants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
 func (RefundFlow) PrimaryKey() []string {
 	return []string{
 		"ID",
+	}
+}
+
+func (RefundFlow) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
+	return github_com_eden_framework_sqlx_builder.Indexes{
+		"I_remote_id": []string{
+			"RemoteFlowID",
+			"PaymentFlowID",
+			"RemotePaymentFlowID",
+		},
+		"I_status": []string{
+			"Status",
+		},
 	}
 }
 
@@ -207,6 +221,10 @@ func (m *RefundFlow) IndexFieldNames() []string {
 	return []string{
 		"FlowID",
 		"ID",
+		"PaymentFlowID",
+		"RemoteFlowID",
+		"RemotePaymentFlowID",
+		"Status",
 	}
 }
 
@@ -671,6 +689,62 @@ func (m *RefundFlow) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExec
 	table := db.T(m)
 
 	condition := table.F("ID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *RefundFlow) BatchFetchByPaymentFlowIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]RefundFlow, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("PaymentFlowID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *RefundFlow) BatchFetchByRemoteFlowIDList(db github_com_eden_framework_sqlx.DBExecutor, values []string) ([]RefundFlow, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("RemoteFlowID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *RefundFlow) BatchFetchByRemotePaymentFlowIDList(db github_com_eden_framework_sqlx.DBExecutor, values []string) ([]RefundFlow, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("RemotePaymentFlowID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *RefundFlow) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.RefundStatus) ([]RefundFlow, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("Status").In(values)
 
 	return m.List(db, condition)
 

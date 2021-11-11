@@ -12,6 +12,7 @@ import (
 	"github.com/eden-w2w/wechatpay-go/core/option"
 	"github.com/eden-w2w/wechatpay-go/services/payments"
 	"github.com/eden-w2w/wechatpay-go/services/payments/jsapi"
+	"github.com/eden-w2w/wechatpay-go/services/refunddomestic"
 	"github.com/eden-w2w/wechatpay-go/utils"
 	w "github.com/silenceper/wechat/v2"
 	"github.com/silenceper/wechat/v2/cache"
@@ -52,11 +53,15 @@ type Wechat struct {
 	ProductionDesc string
 	// 微信支付回调地址
 	NotifyUrl string
+	// 微信支付退款回调地址
+	RefundNotifyUrl string
 	// 启用微信支付
 	EnableWechatPay bool
 
 	// 定时查单任务配置
 	FetchWechatPaymentStatusTask string
+	// 定时查退款单任务配置
+	FetchWechatRefundTask string
 
 	// 订单确认通知订阅消息模板
 	ConfirmMessageTemplateID string
@@ -71,12 +76,13 @@ type Wechat struct {
 }
 
 type Controller struct {
-	wc           *w.Wechat
-	program      *miniprogram.MiniProgram
-	payClient    *core.Client
-	jsapiService jsapi.JsapiApiService
-	config       Wechat
-	isInit       bool
+	wc            *w.Wechat
+	program       *miniprogram.MiniProgram
+	payClient     *core.Client
+	jsapiService  jsapi.JsapiApiService
+	refundService refunddomestic.RefundsApiService
+	config        Wechat
+	isInit        bool
 }
 
 func (c *Controller) Init(wechatConfig Wechat) {
@@ -91,7 +97,8 @@ func (c *Controller) Init(wechatConfig Wechat) {
 	)
 
 	var client *core.Client
-	var service jsapi.JsapiApiService
+	var jsapiApiService jsapi.JsapiApiService
+	var refundService refunddomestic.RefundsApiService
 	if wechatConfig.EnableWechatPay {
 		mchPK, err := utils.LoadPrivateKey(wechatConfig.MerchantPK)
 		if err != nil {
@@ -111,7 +118,10 @@ func (c *Controller) Init(wechatConfig Wechat) {
 			logrus.Panicf("[wechat.newController] core.NewClient err: %v", err)
 		}
 
-		service = jsapi.JsapiApiService{
+		jsapiApiService = jsapi.JsapiApiService{
+			Client: client,
+		}
+		refundService = refunddomestic.RefundsApiService{
 			Client: client,
 		}
 	}
@@ -119,7 +129,8 @@ func (c *Controller) Init(wechatConfig Wechat) {
 	c.wc = wc
 	c.program = program
 	c.payClient = client
-	c.jsapiService = service
+	c.jsapiService = jsapiApiService
+	c.refundService = refundService
 	c.config = wechatConfig
 	c.isInit = true
 }
@@ -241,6 +252,9 @@ func (c Controller) QueryOrderByOutTradeNo(req jsapi.QueryOrderByOutTradeNoReque
 	resp *payments.Transaction,
 	err error,
 ) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	resp, _, err = c.jsapiService.QueryOrderByOutTradeNo(context.Background(), req)
 	if err != nil {
 		logrus.Warningf(
@@ -253,6 +267,9 @@ func (c Controller) QueryOrderByOutTradeNo(req jsapi.QueryOrderByOutTradeNoReque
 }
 
 func (c Controller) CloseOrder(req jsapi.CloseOrderRequest) error {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	_, err := c.jsapiService.CloseOrder(context.Background(), req)
 	if err != nil {
 		logrus.Warningf(
@@ -265,6 +282,9 @@ func (c Controller) CloseOrder(req jsapi.CloseOrderRequest) error {
 }
 
 func (c Controller) SendSubscribeMessage(msg *subscribe.Message) error {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	err := c.program.GetSubscribe().Send(msg)
 	if err != nil {
 		logrus.Warningf("[SendSubscribeMessage] c.program.GetSubscribe().Send err: %v, msg: %+v", err, msg)
@@ -273,6 +293,9 @@ func (c Controller) SendSubscribeMessage(msg *subscribe.Message) error {
 }
 
 func (c Controller) GetTradeBill(req jsapi.TradeBillRequest) (*jsapi.BillResponse, error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	resp, _, err := c.jsapiService.TradeBill(context.Background(), req)
 	if err != nil {
 		logrus.Errorf("[GetTradeBill] c.jsapiService.TradeBill err: %v, req: %+v", err, req)
@@ -282,9 +305,60 @@ func (c Controller) GetTradeBill(req jsapi.TradeBillRequest) (*jsapi.BillRespons
 }
 
 func (c Controller) DownloadURL(bill jsapi.BillResponse) (data []byte, err error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
 	data, _, err = c.jsapiService.DownloadURL(context.Background(), bill)
 	if err != nil {
 		logrus.Errorf("[DownloadURL] c.jsapiService.DownloadURL err: %v, req: %+v", err, bill)
+		return nil, errors.BadGateway
+	}
+	return
+}
+
+func (c Controller) CreateRefund(req refunddomestic.CreateRequest) (result *refunddomestic.Refund, err error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
+	result, _, err = c.refundService.Create(context.Background(), req)
+	if err != nil {
+		logrus.Errorf("[CreateRefund] c.refundService.Create err: %v, req: %+v", err, req)
+		return nil, errors.BadGateway
+	}
+	return
+}
+
+func (c Controller) ParseWechatRefundNotify(ctx context.Context, request *http.Request) (
+	*notify.Request,
+	*refunddomestic.RefundNotify,
+	error,
+) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
+	certVisitor := downloader.MgrInstance().GetCertificateVisitor(c.config.MerchantID)
+	handler := notify.NewNotifyHandler(c.config.MerchantSecret, verifiers.NewSHA256WithRSAVerifier(certVisitor))
+
+	refund := new(refunddomestic.RefundNotify)
+	notifyReq, err := handler.ParseNotifyRequest(ctx, request, refund)
+	if err != nil {
+		logrus.Errorf("[ParseWechatRefundNotify] handler.ParseNotifyRequest err: %v", err)
+		return nil, nil, errors.InternalError
+	}
+
+	return notifyReq, refund, nil
+}
+
+func (c Controller) QueryRefundByOutRefundID(req refunddomestic.QueryByOutRefundNoRequest) (
+	resp *refunddomestic.Refund,
+	err error,
+) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
+	resp, _, err = c.refundService.QueryByOutRefundNo(context.Background(), req)
+	if err != nil {
+		logrus.Errorf("[QueryRefundByOutRefundID] c.refundService.QueryByOutRefundNo err: %v, req: %+v", err, req)
 		return nil, errors.BadGateway
 	}
 	return

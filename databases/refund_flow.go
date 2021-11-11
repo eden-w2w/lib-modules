@@ -9,12 +9,14 @@ import (
 //go:generate eden generate tag RefundFlow --defaults=true
 // @def primary ID
 // @def unique_index U_flow_id FlowID
+// @def index I_status Status
+// @def index I_remote_id RemoteFlowID PaymentFlowID RemotePaymentFlowID
 type RefundFlow struct {
 	datatypes.PrimaryID
 	// 业务ID
 	FlowID uint64 `json:"flowID,string" db:"f_flow_id"`
 	// 支付系统退款单号
-	RemoteFlowID string `json:"remoteFlowID" db:"f_remote_flow_id"`
+	RemoteFlowID string `json:"remoteFlowID" db:"f_remote_flow_id,default=''"`
 	// 交易单号
 	PaymentFlowID uint64 `json:"paymentFlowID,string" db:"f_payment_flow_id"`
 	// 支付系统交易单号

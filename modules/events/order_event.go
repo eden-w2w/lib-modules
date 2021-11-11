@@ -9,11 +9,13 @@ import (
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
+	"github.com/eden-w2w/lib-modules/modules/refund_flow"
 	"github.com/eden-w2w/lib-modules/modules/user"
 	"github.com/eden-w2w/lib-modules/modules/wechat"
 	"github.com/eden-w2w/lib-modules/pkg/strings"
 	"github.com/eden-w2w/wechatpay-go/core"
 	"github.com/eden-w2w/wechatpay-go/services/payments/jsapi"
+	"github.com/eden-w2w/wechatpay-go/services/refunddomestic"
 	"github.com/silenceper/wechat/v2/miniprogram/subscribe"
 	"github.com/sirupsen/logrus"
 )
@@ -247,9 +249,37 @@ func (o *OrderEvent) RefundPayment(flow databases.PaymentFlow, db sqlx.DBExecuto
 		return err
 	}
 
-	// TODO 创建退款单
+	// 创建退款单
+	refundFlow, err := refund_flow.GetController().CreateRefundFlow(refund_flow.CreateRefundFlowRequest{
+		PaymentFlowID:       flow.FlowID,
+		RemotePaymentFlowID: flow.RemoteFlowID,
+		TotalAmount:         flow.Amount,
+		RefundAmount:        flow.Amount,
+	}, db)
+	if err != nil {
+		return err
+	}
 
-	// TODO 微信支付退款
+	// 微信支付退款
+	wechatRefund, err := wechat.GetController().CreateRefund(refunddomestic.CreateRequest{
+		SubMchid:      nil,
+		TransactionId: core.String(flow.RemoteFlowID),
+		OutTradeNo:    core.String(fmt.Sprintf("%d", flow.FlowID)),
+		OutRefundNo:   core.String(fmt.Sprintf("%d", refundFlow.FlowID)),
+		Reason:        nil,
+		NotifyUrl:     core.String(o.config.RefundNotifyUrl),
+		FundsAccount:  nil,
+		Amount: &refunddomestic.AmountReq{
+			Refund:   core.Int64(int64(refundFlow.RefundAmount)),
+			From:     nil,
+			Total:    core.Int64(int64(flow.Amount)),
+			Currency: core.String("CNY"),
+		},
+		GoodsDetail: nil,
+	})
+	if err != nil {
+		return err
+	}
 
-	return nil
+	return refund_flow.GetController().UpdateRefundFlowRemoteID(refundFlow.FlowID, *wechatRefund.RefundId, db)
 }
