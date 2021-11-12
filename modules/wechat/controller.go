@@ -10,6 +10,7 @@ import (
 	"github.com/eden-w2w/wechatpay-go/core/downloader"
 	"github.com/eden-w2w/wechatpay-go/core/notify"
 	"github.com/eden-w2w/wechatpay-go/core/option"
+	"github.com/eden-w2w/wechatpay-go/services/coupons"
 	"github.com/eden-w2w/wechatpay-go/services/payments"
 	"github.com/eden-w2w/wechatpay-go/services/payments/jsapi"
 	"github.com/eden-w2w/wechatpay-go/services/refunddomestic"
@@ -81,6 +82,7 @@ type Controller struct {
 	payClient     *core.Client
 	jsapiService  jsapi.JsapiApiService
 	refundService refunddomestic.RefundsApiService
+	couponService coupons.CouponApiService
 	config        Wechat
 	isInit        bool
 }
@@ -99,6 +101,7 @@ func (c *Controller) Init(wechatConfig Wechat) {
 	var client *core.Client
 	var jsapiApiService jsapi.JsapiApiService
 	var refundService refunddomestic.RefundsApiService
+	var couponService coupons.CouponApiService
 	if wechatConfig.EnableWechatPay {
 		mchPK, err := utils.LoadPrivateKey(wechatConfig.MerchantPK)
 		if err != nil {
@@ -124,6 +127,9 @@ func (c *Controller) Init(wechatConfig Wechat) {
 		refundService = refunddomestic.RefundsApiService{
 			Client: client,
 		}
+		couponService = coupons.CouponApiService{
+			Client: client,
+		}
 	}
 
 	c.wc = wc
@@ -131,6 +137,7 @@ func (c *Controller) Init(wechatConfig Wechat) {
 	c.payClient = client
 	c.jsapiService = jsapiApiService
 	c.refundService = refundService
+	c.couponService = couponService
 	c.config = wechatConfig
 	c.isInit = true
 }
@@ -359,6 +366,30 @@ func (c Controller) QueryRefundByOutRefundID(req refunddomestic.QueryByOutRefund
 	resp, _, err = c.refundService.QueryByOutRefundNo(context.Background(), req)
 	if err != nil {
 		logrus.Errorf("[QueryRefundByOutRefundID] c.refundService.QueryByOutRefundNo err: %v, req: %+v", err, req)
+		return nil, errors.BadGateway
+	}
+	return
+}
+
+func (c Controller) GetStocks(req coupons.GetStocksRequest) (resp *coupons.StocksPagination, err error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
+	resp, _, err = c.couponService.GetStocks(context.Background(), req)
+	if err != nil {
+		logrus.Errorf("[GetStocks] c.couponService.GetStocks err: %v, req: %+v", err, req)
+		return nil, errors.BadGateway
+	}
+	return
+}
+
+func (c Controller) GiveCoupon(req coupons.GiveCouponRequest) (resp *coupons.GiveCouponResponse, err error) {
+	if !c.isInit {
+		logrus.Panicf("[WechatController] not Init")
+	}
+	resp, _, err = c.couponService.GiveCoupon(context.Background(), req)
+	if err != nil {
+		logrus.Errorf("[GiveCoupon] c.couponService.GiveCoupon err: %v, req: %+v", err, req)
 		return nil, errors.BadGateway
 	}
 	return

@@ -6,7 +6,7 @@ require (
 	github.com/eden-framework/courier v1.0.5
 	github.com/eden-framework/enumeration v1.0.0
 	github.com/eden-framework/sqlx v0.0.1
-	github.com/eden-w2w/wechatpay-go v0.2.12-0.20211111092745-2fb11eb5e8dc
+	github.com/eden-w2w/wechatpay-go v0.2.12-0.20211112161453-17eb0b5f9f5f
 	github.com/profzone/envconfig v1.5.2 // indirect
 	github.com/robfig/cron/v3 v3.0.0
 	github.com/silenceper/wechat/v2 v2.0.9
