@@ -33,13 +33,13 @@ type UpdateRefundFlowRequest struct {
 
 type GetRefundFlowsRequest struct {
 	// 支付系统退款单号
-	RemoteFlowID string `json:"remoteFlowID" default:""`
+	RemoteFlowID string `in:"query" name:"remoteFlowID" default:""`
 	// 交易单号
-	PaymentFlowID uint64 `json:"paymentFlowID,string" default:""`
+	PaymentFlowID uint64 `in:"query" name:"paymentFlowID,string" default:""`
 	// 支付系统交易单号
-	RemotePaymentFlowID string `json:"remotePaymentFlowID" default:""`
+	RemotePaymentFlowID string `in:"query" name:"remotePaymentFlowID" default:""`
 	// 退款状态
-	Status enums.RefundStatus `json:"status" default:""`
+	Status enums.RefundStatus `in:"query" name:"status" default:""`
 	modules.Pagination
 }
 
