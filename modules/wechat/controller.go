@@ -390,6 +390,9 @@ func (c Controller) GiveCoupon(req coupons.GiveCouponRequest) (resp *coupons.Giv
 	resp, _, err = c.couponService.GiveCoupon(context.Background(), req)
 	if err != nil {
 		logrus.Errorf("[GiveCoupon] c.couponService.GiveCoupon err: %v, req: %+v", err, req)
+		if e, ok := err.(*core.APIError); ok {
+			return nil, errors.BadGateway.StatusError().WithErrTalk().WithMsg(e.Message)
+		}
 		return nil, errors.BadGateway
 	}
 	return
