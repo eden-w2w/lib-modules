@@ -140,6 +140,8 @@ type GetMyOrdersResponse struct {
 	CreatedAt datatypes.MySQLTimestamp `json:"createdAt"`
 	// 物料
 	Goods []GoodsListResponse `json:"goods"`
+	// 物流信息
+	Logistics *databases.OrderLogistics `json:"logistics"`
 }
 
 type GetOrderByIDResponse struct {
