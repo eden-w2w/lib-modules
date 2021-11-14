@@ -2,6 +2,7 @@ package cron
 
 import (
 	"context"
+	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 )
@@ -15,7 +16,7 @@ type Manager struct {
 func GetManager() *Manager {
 	if manager == nil {
 		parser := cron.NewParser(cron.Second | cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
-		t := cron.New(cron.WithParser(parser))
+		t := cron.New(cron.WithParser(parser), cron.WithLocation(datatypes.CST))
 		manager = &Manager{t: t}
 	}
 	return manager
