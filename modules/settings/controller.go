@@ -47,6 +47,10 @@ func (c *Controller) Init(db sqlx.DBExecutor) {
 	c.isInit = true
 }
 
+func (c Controller) GetSetting() *databases.Settings {
+	return c.model
+}
+
 func (c Controller) UpdateSetting(params UpdateSettingParams, db sqlx.DBExecutor) error {
 	if !c.isInit || c.model == nil {
 		logrus.Panicf("[SettingController] not Init")
