@@ -84,7 +84,7 @@ func (c Controller) GetAdminByToken(token string) (*databases.Administrators, er
 	err := model.FetchByToken(c.db)
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
-			return nil, general_errors.AdminNotFound
+			return nil, general_errors.AdminTokenExpired
 		}
 		logrus.Errorf("[GetAdminByToken] model.FetchByToken err: %v, token: %s", err, token)
 		return nil, general_errors.InternalError
