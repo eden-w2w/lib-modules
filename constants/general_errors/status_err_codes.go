@@ -29,6 +29,8 @@ const (
 	GoodsNotFound
 	// @errTalk 结算单未找到
 	SettlementFlowNotFound
+	// @errTalk 管理员登录已失效
+	AdminTokenExpired
 )
 
 const (
