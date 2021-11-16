@@ -7,6 +7,7 @@ import (
 	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
+	"github.com/eden-w2w/lib-modules/modules/goods"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
 	"github.com/eden-w2w/lib-modules/modules/refund_flow"
@@ -20,15 +21,34 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type InventoryLock func(db sqlx.DBExecutor, goodsID uint64, amount uint32) error
+type InventoryUnlock func(db sqlx.DBExecutor, goodsID uint64, amount uint32) error
+
 type OrderEvent struct {
-	config wechat.Wechat
+	config   wechat.Wechat
+	locker   InventoryLock
+	unlocker InventoryUnlock
 }
 
-func NewOrderEvent(config wechat.Wechat) *OrderEvent {
-	return &OrderEvent{config: config}
+func NewOrderEvent(config wechat.Wechat, inventoryLocker InventoryLock, inventoryUnlocker InventoryUnlock) *OrderEvent {
+	return &OrderEvent{
+		config:   config,
+		locker:   inventoryLocker,
+		unlocker: inventoryUnlocker,
+	}
 }
 
-func (o *OrderEvent) OnOrderCreateEvent(db sqlx.DBExecutor, order *databases.Order) error {
+func (o *OrderEvent) OnOrderCreateEvent(
+	db sqlx.DBExecutor,
+	order *databases.Order,
+	goodsList []databases.OrderGoods,
+) error {
+	for _, item := range goodsList {
+		err := o.locker(db, item.GoodsID, item.Amount)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -82,7 +102,7 @@ func (o *OrderEvent) OnOrderCompleteEvent(
 	db sqlx.DBExecutor,
 	order *databases.Order,
 	logistics *databases.OrderLogistics,
-	goods []databases.OrderGoods,
+	goodsList []databases.OrderGoods,
 ) error {
 	// 获取支付流水
 	flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(
@@ -98,7 +118,7 @@ func (o *OrderEvent) OnOrderCompleteEvent(
 	flow := flows[0]
 
 	// 获取订单创建者
-	orderUser, err := user.GetController().GetUserByUserID(order.UserID, db, true)
+	orderUser, err := user.GetController().GetUserByUserID(order.UserID, db, false)
 	if err != nil {
 		return err
 	}
@@ -108,7 +128,7 @@ func (o *OrderEvent) OnOrderCompleteEvent(
 		return nil
 	}
 	// 获取推荐者
-	refererUser, err := user.GetController().GetUserByUserID(orderUser.RefererID, db, true)
+	refererUser, err := user.GetController().GetUserByUserID(orderUser.RefererID, db, false)
 	if err != nil {
 		return err
 	}
@@ -128,9 +148,26 @@ func (o *OrderEvent) OnOrderCompleteEvent(
 		}, db,
 	)
 
+	// 更新商品销量
+	for _, g := range goodsList {
+		gModel, err := goods.GetController().GetGoodsByID(g.GoodsID, db, true)
+		if err != nil {
+			return err
+		}
+
+		err = goods.GetController().UpdateGoods(
+			gModel.GoodsID, goods.UpdateGoodsParams{
+				Sales: gModel.Sales + g.Amount,
+			},
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	var goodsName = ""
-	if len(goods) > 0 {
-		goodsName = goods[0].Name
+	if len(goodsList) > 0 {
+		goodsName = goodsList[0].Name
 	}
 	msg := &subscribe.Message{
 		ToUser:     order.UserOpenID,
@@ -147,11 +184,22 @@ func (o *OrderEvent) OnOrderCompleteEvent(
 	}
 	_ = wechat.GetController().SendSubscribeMessage(msg)
 
-	// 更新提成概况
 	return err
 }
 
-func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error {
+func (o *OrderEvent) OnOrderCloseEvent(
+	db sqlx.DBExecutor,
+	order *databases.Order,
+	goodsList []databases.OrderGoods,
+) error {
+	// 解锁物料
+	for _, g := range goodsList {
+		err := o.unlocker(db, g.GoodsID, g.Amount)
+		if err != nil {
+			return err
+		}
+	}
+
 	// 获取支付流水
 	flows, err := payment_flow.GetController().GetFlowByOrderIDAndStatus(
 		order.OrderID,
@@ -193,7 +241,7 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 				}
 			}
 
-			err = o.RefundPayment(flow, db)
+			err = o.refundPayment(flow, db)
 			if err != nil {
 				return err
 			}
@@ -242,7 +290,7 @@ func (o *OrderEvent) OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Orde
 	return nil
 }
 
-func (o *OrderEvent) RefundPayment(flow databases.PaymentFlow, db sqlx.DBExecutor) error {
+func (o *OrderEvent) refundPayment(flow databases.PaymentFlow, db sqlx.DBExecutor) error {
 	// 变更支付单状态为转入退款
 	err := payment_flow.GetController().UpdatePaymentFlowStatus(&flow, enums.PAYMENT_STATUS__REFUND, nil, db)
 	if err != nil {
@@ -250,33 +298,37 @@ func (o *OrderEvent) RefundPayment(flow databases.PaymentFlow, db sqlx.DBExecuto
 	}
 
 	// 创建退款单
-	refundFlow, err := refund_flow.GetController().CreateRefundFlow(refund_flow.CreateRefundFlowRequest{
-		PaymentFlowID:       flow.FlowID,
-		RemotePaymentFlowID: flow.RemoteFlowID,
-		TotalAmount:         flow.Amount,
-		RefundAmount:        flow.Amount,
-	}, db)
+	refundFlow, err := refund_flow.GetController().CreateRefundFlow(
+		refund_flow.CreateRefundFlowRequest{
+			PaymentFlowID:       flow.FlowID,
+			RemotePaymentFlowID: flow.RemoteFlowID,
+			TotalAmount:         flow.Amount,
+			RefundAmount:        flow.Amount,
+		}, db,
+	)
 	if err != nil {
 		return err
 	}
 
 	// 微信支付退款
-	wechatRefund, err := wechat.GetController().CreateRefund(refunddomestic.CreateRequest{
-		SubMchid:      nil,
-		TransactionId: core.String(flow.RemoteFlowID),
-		OutTradeNo:    core.String(fmt.Sprintf("%d", flow.FlowID)),
-		OutRefundNo:   core.String(fmt.Sprintf("%d", refundFlow.FlowID)),
-		Reason:        nil,
-		NotifyUrl:     core.String(o.config.RefundNotifyUrl),
-		FundsAccount:  nil,
-		Amount: &refunddomestic.AmountReq{
-			Refund:   core.Int64(int64(refundFlow.RefundAmount)),
-			From:     nil,
-			Total:    core.Int64(int64(flow.Amount)),
-			Currency: core.String("CNY"),
+	wechatRefund, err := wechat.GetController().CreateRefund(
+		refunddomestic.CreateRequest{
+			SubMchid:      nil,
+			TransactionId: core.String(flow.RemoteFlowID),
+			OutTradeNo:    core.String(fmt.Sprintf("%d", flow.FlowID)),
+			OutRefundNo:   core.String(fmt.Sprintf("%d", refundFlow.FlowID)),
+			Reason:        nil,
+			NotifyUrl:     core.String(o.config.RefundNotifyUrl),
+			FundsAccount:  nil,
+			Amount: &refunddomestic.AmountReq{
+				Refund:   core.Int64(int64(refundFlow.RefundAmount)),
+				From:     nil,
+				Total:    core.Int64(int64(flow.Amount)),
+				Currency: core.String("CNY"),
+			},
+			GoodsDetail: nil,
 		},
-		GoodsDetail: nil,
-	})
+	)
 	if err != nil {
 		return err
 	}

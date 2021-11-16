@@ -23,7 +23,7 @@ type OrderGoods struct {
 	// 发货地
 	DispatchAddr string `json:"dispatchAddr" db:"f_dispatch_addr"`
 	// 销量
-	Sales int `json:"sales" db:"f_sales"`
+	Sales uint32 `json:"sales" db:"f_sales"`
 	// 标题图片
 	MainPicture string `json:"mainPicture" db:"f_main_picture,size=1024"`
 	// 所有展示图片

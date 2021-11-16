@@ -4,6 +4,7 @@ import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
+	"github.com/eden-w2w/lib-modules/modules/goods"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
 	"github.com/eden-w2w/lib-modules/modules/user"
@@ -39,7 +40,7 @@ func (c *Controller) Init(db sqlx.DBExecutor, d time.Duration, h EventHandler) {
 	c.isInit = true
 }
 
-func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*databases.Order, error) {
+func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 	if !c.isInit {
 		logrus.Panicf("[OrderController] not Init")
 	}
@@ -53,50 +54,58 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 		return nil, err
 	}
 
-	// 获取订单总额与库中物料进行比对
-	var totalPrice uint64 = 0
-	var goodsList = make([]CreateOrderGoodsModelParams, 0)
-	for _, g := range p.Goods {
-		goods := databases.Goods{GoodsID: g.GoodsID}
-		err := goods.FetchByGoodsID(c.db)
-		if err != nil {
-			logrus.Errorf("[CreateOrder] goods.FetchByGoodsID(c.db) err: %v, goodsID: %d", err, g.GoodsID)
-			return nil, general_errors.GoodsNotFound
-		}
-		totalPrice += goods.Price * uint64(g.Amount)
-		goodsList = append(
-			goodsList, CreateOrderGoodsModelParams{
-				Goods:  goods,
-				Amount: g.Amount,
-			},
-		)
-	}
-	if totalPrice != p.TotalPrice {
-		logrus.Errorf(
-			"[CreateOrder] totalPrice != p.TotalPrice totalPrice: %d, p.TotalPrice: %d",
-			totalPrice,
-			p.TotalPrice,
-		)
-		return nil, general_errors.BadRequest.StatusError().WithDesc("订单总额与商品总价不一致")
-	}
-	if len(goodsList) == 0 {
-		logrus.Errorf("[CreateOrder] len(goodsList) == 0")
-		return nil, general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
-	}
-	if p.TotalPrice-p.DiscountAmount != p.ActualAmount {
-		logrus.Errorf(
-			"[CreateOrder] p.TotalPrice - p.DiscountAmount != p.ActualAmount p.TotalPrice: %d, p.DiscountAmount: %d, p.ActualAmount: %d",
-			p.TotalPrice,
-			p.DiscountAmount,
-			p.ActualAmount,
-		)
-		return nil, general_errors.BadRequest.StatusError().WithDesc("订单实际支付金额错误")
-	}
-
-	// 创建订单
 	var order *databases.Order
+	var orderGoodsList = make([]databases.OrderGoods, 0)
+	var goodsList = make([]CreateOrderGoodsModelParams, 0)
 
 	tx := sqlx.NewTasks(c.db)
+
+	// 获取订单总额与库中物料进行比对，物料库存检查
+	tx = tx.With(
+		func(db sqlx.DBExecutor) error {
+			var totalPrice uint64 = 0
+			for _, g := range p.Goods {
+				gModel, err := goods.GetController().GetGoodsByID(g.GoodsID, db, true)
+				if err != nil {
+					return err
+				}
+				if uint64(g.Amount) > gModel.Inventory {
+					return general_errors.GoodsInventoryShortage
+				}
+				totalPrice += gModel.Price * uint64(g.Amount)
+				goodsList = append(
+					goodsList, CreateOrderGoodsModelParams{
+						Goods:  *gModel,
+						Amount: g.Amount,
+					},
+				)
+			}
+			if totalPrice != p.TotalPrice {
+				logrus.Errorf(
+					"[CreateOrder] totalPrice != p.TotalPrice totalPrice: %d, p.TotalPrice: %d",
+					totalPrice,
+					p.TotalPrice,
+				)
+				return general_errors.BadRequest.StatusError().WithDesc("订单总额与商品总价不一致")
+			}
+			if len(goodsList) == 0 {
+				logrus.Errorf("[CreateOrder] len(goodsList) == 0")
+				return general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
+			}
+			if p.TotalPrice-p.DiscountAmount != p.ActualAmount {
+				logrus.Errorf(
+					"[CreateOrder] p.TotalPrice - p.DiscountAmount != p.ActualAmount p.TotalPrice: %d, p.DiscountAmount: %d, p.ActualAmount: %d",
+					p.TotalPrice,
+					p.DiscountAmount,
+					p.ActualAmount,
+				)
+				return general_errors.BadRequest.StatusError().WithDesc("订单实际支付金额错误")
+			}
+			return nil
+		},
+	)
+
+	// 创建订单
 	tx = tx.With(
 		func(db sqlx.DBExecutor) error {
 			id, _ := id_generator.GetGenerator().GenerateUniqueID()
@@ -133,24 +142,11 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 		},
 	)
 
-	// 锁定库存
-	tx = tx.With(
-		func(db sqlx.DBExecutor) error {
-			for _, item := range goodsList {
-				err := locker(db, item.GoodsID, item.Amount)
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		},
-	)
-
 	// 创建订单物料
 	tx = tx.With(
 		func(db sqlx.DBExecutor) error {
 			for _, item := range goodsList {
-				orderGoods := &databases.OrderGoods{
+				orderGoods := databases.OrderGoods{
 					OrderID:        order.OrderID,
 					GoodsID:        item.GoodsID,
 					Name:           item.Name,
@@ -171,6 +167,8 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 				if err != nil {
 					return err
 				}
+
+				orderGoodsList = append(orderGoodsList, orderGoods)
 			}
 			return nil
 		},
@@ -179,7 +177,7 @@ func (c Controller) CreateOrder(p CreateOrderParams, locker InventoryLock) (*dat
 	// 执行创建事件
 	tx = tx.With(
 		func(db sqlx.DBExecutor) error {
-			return c.eventHandler.OnOrderCreateEvent(db, order)
+			return c.eventHandler.OnOrderCreateEvent(db, order, orderGoodsList)
 		},
 	)
 
@@ -553,9 +551,9 @@ func (c Controller) updateOrderGoods(
 	}
 	for _, g := range newGoods {
 		model := databases.Goods{GoodsID: g.GoodsID}
-		err := model.FetchByGoodsIDForUpdate(c.db)
+		err := model.FetchByGoodsIDForUpdate(db)
 		if err != nil {
-			logrus.Errorf("[updateOrderGoods] model.FetchByGoodsID(c.db) err: %v, goodsID: %d", err, g.GoodsID)
+			logrus.Errorf("[updateOrderGoods] model.FetchByGoodsID(db) err: %v, goodsID: %d", err, g.GoodsID)
 			return general_errors.GoodsNotFound
 		}
 
@@ -714,7 +712,7 @@ func (c Controller) UpdateOrder(
 	return err
 }
 
-func (c Controller) CancelOrder(orderID, userID uint64, unlocker InventoryUnlock) error {
+func (c Controller) CancelOrder(orderID, userID uint64) error {
 	if !c.isInit {
 		logrus.Panicf("[OrderController] not Init")
 	}
@@ -747,22 +745,8 @@ func (c Controller) CancelOrder(orderID, userID uint64, unlocker InventoryUnlock
 			if err != nil {
 				return err
 			}
-
-			for _, g := range goods {
-				err = unlocker(db, g.GoodsID, g.Amount)
-				if err != nil {
-					return err
-				}
-			}
-
-			return nil
-		},
-	)
-
-	tx = tx.With(
-		func(db sqlx.DBExecutor) error {
 			// 执行订单取消事件
-			return c.eventHandler.OnOrderCloseEvent(db, order)
+			return c.eventHandler.OnOrderCloseEvent(db, order, goods)
 		},
 	)
 

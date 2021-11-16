@@ -23,7 +23,7 @@ type Goods struct {
 	// 发货地
 	DispatchAddr string `json:"dispatchAddr" db:"f_dispatch_addr"`
 	// 销量
-	Sales int `json:"sales" db:"f_sales,default=0"`
+	Sales uint32 `json:"sales" db:"f_sales,default=0"`
 	// 标题图片
 	MainPicture string `json:"mainPicture" db:"f_main_picture,size=1024"`
 	// 所有展示图片
@@ -40,6 +40,12 @@ type Goods struct {
 	Inventory uint64 `json:"inventory" db:"f_inventory,default=0"`
 	// 详细介绍
 	Detail string `json:"detail" db:"f_detail,size=65535"`
+	// 是否开启无货后预订模式
+	IsAllowBooking datatypes.Bool `json:"isAllowBooking" db:"f_is_allow_booking,default=0"`
+	// 预计到货时间
+	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" db:"f_eta,null"`
+	// 预售销量
+	BookingSales int `json:"bookingSales" db:"f_booking_sales,default=0"`
 
 	datatypes.OperateTime
 }

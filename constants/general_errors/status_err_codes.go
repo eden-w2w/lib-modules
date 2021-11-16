@@ -12,6 +12,8 @@ const ServiceStatusErrorCode = 0 // todo rename this
 const (
 	// 请求参数错误
 	BadRequest status_error.StatusErrorCode = http.StatusBadRequest*1e6 + ServiceStatusErrorCode + iota
+	// @errTalk 商品库存不足无法创建订单
+	GoodsInventoryShortage
 )
 
 const (

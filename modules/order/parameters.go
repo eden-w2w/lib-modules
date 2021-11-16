@@ -14,7 +14,7 @@ type InventoryLock func(db sqlx.DBExecutor, goodsID uint64, amount uint32) error
 type InventoryUnlock func(db sqlx.DBExecutor, goodsID uint64, amount uint32) error
 
 type EventHandler interface {
-	OnOrderCreateEvent(db sqlx.DBExecutor, order *databases.Order) error
+	OnOrderCreateEvent(db sqlx.DBExecutor, order *databases.Order, goodsList []databases.OrderGoods) error
 	OnOrderPaidEvent(db sqlx.DBExecutor, order *databases.Order, payment *databases.PaymentFlow) error
 	OnOrderConfirmEvent(db sqlx.DBExecutor, order *databases.Order) error
 	OnOrderDispatchEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics) error
@@ -24,7 +24,7 @@ type EventHandler interface {
 		logistics *databases.OrderLogistics,
 		goods []databases.OrderGoods,
 	) error
-	OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order) error
+	OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order, goodsList []databases.OrderGoods) error
 }
 
 type CreateOrderParams struct {

@@ -3,6 +3,7 @@ package goods
 import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
+	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/sirupsen/logrus"
 	"sync"
 
@@ -55,13 +56,21 @@ func (c Controller) GetGoods(p GetGoodsParams) ([]databases.Goods, error) {
 	return goods, nil
 }
 
-func (c Controller) GetGoodsByID(goodsID uint64) (*databases.Goods, error) {
+func (c Controller) GetGoodsByID(goodsID uint64, db sqlx.DBExecutor, forUpdate bool) (*databases.Goods, error) {
 	if !c.isInit {
 		logrus.Panicf("[GoodsController] not Init")
 	}
+	if db == nil {
+		db = c.db
+	}
 
+	var err error
 	m := &databases.Goods{GoodsID: goodsID}
-	err := m.FetchByGoodsID(c.db)
+	if forUpdate {
+		err = m.FetchByGoodsIDForUpdate(db)
+	} else {
+		err = m.FetchByGoodsID(c.db)
+	}
 	if err != nil {
 		if sqlx.DBErr(err).IsNotFound() {
 			return nil, general_errors.GoodsNotFound
@@ -81,20 +90,26 @@ func (c Controller) LockInventory(db sqlx.DBExecutor, goodsID uint64, amount uin
 		locker.Lock()
 		defer locker.Unlock()
 
-		goods := databases.Goods{GoodsID: goodsID}
-		err := goods.FetchByGoodsID(db)
+		goods, err := c.GetGoodsByID(goodsID, db, false)
 		if err != nil {
-			logrus.Errorf("[LockInventory] goods.FetchByGoodsID(db) err: %v, goodsID: %d", err, goodsID)
-			return general_errors.InternalError
+			return err
 		}
 
 		inventory := goods.Inventory - uint64(amount)
+		if inventory < 0 {
+			return general_errors.GoodsInventoryShortage
+		}
 		f := builder.FieldValues{
 			"Inventory": inventory,
 		}
 		err = goods.UpdateByGoodsIDWithMap(db, f)
 		if err != nil {
-			logrus.Errorf("[LockInventory] goods.UpdateByGoodsIDWithStruct(db) err: %v, goodsID: %d, fields: %+v", err, goodsID, f)
+			logrus.Errorf(
+				"[LockInventory] goods.UpdateByGoodsIDWithStruct(db) err: %v, goodsID: %d, fields: %+v",
+				err,
+				goodsID,
+				f,
+			)
 			return general_errors.InternalError
 		}
 
@@ -127,7 +142,12 @@ func (c Controller) UnlockInventory(db sqlx.DBExecutor, goodsID uint64, amount u
 		}
 		err = goods.UpdateByGoodsIDWithMap(db, f)
 		if err != nil {
-			logrus.Errorf("[LockInventory] goods.UpdateByGoodsIDWithStruct(db) err: %v, goodsID: %d, fields: %+v", err, goodsID, f)
+			logrus.Errorf(
+				"[LockInventory] goods.UpdateByGoodsIDWithStruct(db) err: %v, goodsID: %d, fields: %+v",
+				err,
+				goodsID,
+				f,
+			)
 			return general_errors.InternalError
 		}
 
@@ -174,13 +194,22 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams) error 
 	if params.Price != 0 {
 		model.Price = params.Price
 	}
-	if params.Inventory != 0 {
-		model.Inventory = params.Inventory
+	if params.Inventory != nil {
+		model.Inventory = *params.Inventory
 	}
 	if params.Detail != "" {
 		model.Detail = params.Detail
 	}
-	err := model.UpdateByGoodsIDWithStruct(c.db)
+	if params.IsAllowBooking != datatypes.BOOL_UNKNOWN {
+		model.IsAllowBooking = params.IsAllowBooking
+	}
+	if params.EstimatedTimeArrival != datatypes.TimestampZero {
+		model.EstimatedTimeArrival = params.EstimatedTimeArrival
+	}
+	if params.BookingSales != 0 {
+		model.BookingSales = params.BookingSales
+	}
+	err := model.UpdateByGoodsIDWithStruct(c.db, model.FieldKeyInventory())
 	if err != nil {
 		logrus.Errorf("[UpdateGoods] model.UpdateByGoodsIDWithStruct err: %v, params: %+v", err, params)
 		return general_errors.InternalError
@@ -194,18 +223,22 @@ func (c Controller) CreateGoods(params CreateGoodsParams) (*databases.Goods, err
 	}
 
 	model := &databases.Goods{
-		Name:           params.Name,
-		Comment:        params.Comment,
-		DispatchAddr:   params.DispatchAddr,
-		Sales:          params.Sales,
-		MainPicture:    params.MainPicture,
-		Pictures:       params.Pictures,
-		Specifications: params.Specifications,
-		Activities:     params.Activities,
-		LogisticPolicy: params.LogisticPolicy,
-		Price:          params.Price,
-		Inventory:      params.Inventory,
-		Detail:         params.Detail,
+		Name:                 params.Name,
+		Comment:              params.Comment,
+		DispatchAddr:         params.DispatchAddr,
+		Sales:                params.Sales,
+		MainPicture:          params.MainPicture,
+		Pictures:             params.Pictures,
+		Specifications:       params.Specifications,
+		Activities:           params.Activities,
+		LogisticPolicy:       params.LogisticPolicy,
+		Price:                params.Price,
+		Detail:               params.Detail,
+		IsAllowBooking:       params.IsAllowBooking,
+		EstimatedTimeArrival: params.EstimatedTimeArrival,
+	}
+	if params.Inventory != nil {
+		model.Inventory = *params.Inventory
 	}
 	id, err := model.MaxGoodsID(c.db, nil)
 	if err != nil {

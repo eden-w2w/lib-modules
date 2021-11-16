@@ -3,6 +3,7 @@ package goods
 import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
+	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/constants/types"
 
 	"github.com/eden-w2w/lib-modules/modules"
@@ -38,7 +39,7 @@ type CreateGoodsParams struct {
 	// 发货地
 	DispatchAddr string `json:"dispatchAddr" in:"body"`
 	// 销量
-	Sales int `json:"sales" default:"" in:"body"`
+	Sales uint32 `json:"sales" default:"" in:"body"`
 	// 标题图片
 	MainPicture string `json:"mainPicture" in:"body"`
 	// 所有展示图片
@@ -52,9 +53,13 @@ type CreateGoodsParams struct {
 	// 价格
 	Price uint64 `json:"price" default:"" in:"body"`
 	// 库存
-	Inventory uint64 `json:"inventory" default:"" in:"body"`
+	Inventory *uint64 `json:"inventory" default:"" in:"body"`
 	// 详细介绍
 	Detail string `json:"detail" in:"body"`
+	// 是否开启无货后预订模式
+	IsAllowBooking datatypes.Bool `json:"isAllowBooking"`
+	// 预计到货时间
+	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta"`
 }
 
 type UpdateGoodsParams struct {
@@ -65,7 +70,7 @@ type UpdateGoodsParams struct {
 	// 发货地
 	DispatchAddr string `json:"dispatchAddr" default:"" in:"body"`
 	// 销量
-	Sales int `json:"sales" default:"" in:"body"`
+	Sales uint32 `json:"sales" default:"" in:"body"`
 	// 标题图片
 	MainPicture string `json:"mainPicture" default:"" in:"body"`
 	// 所有展示图片
@@ -79,7 +84,13 @@ type UpdateGoodsParams struct {
 	// 价格
 	Price uint64 `json:"price" default:"" in:"body"`
 	// 库存
-	Inventory uint64 `json:"inventory" default:"" in:"body"`
+	Inventory *uint64 `json:"inventory" default:"" in:"body"`
 	// 详细介绍
 	Detail string `json:"detail" default:"" in:"body"`
+	// 是否开启无货后预订模式
+	IsAllowBooking datatypes.Bool `json:"isAllowBooking" default:""`
+	// 预计到货时间
+	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" default:""`
+	// 预售销量
+	BookingSales int `json:"bookingSales" default:""`
 }
