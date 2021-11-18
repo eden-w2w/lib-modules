@@ -7,7 +7,9 @@ import (
 	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
+	"github.com/eden-w2w/lib-modules/modules/booking_flow"
 	"github.com/eden-w2w/lib-modules/modules/goods"
+	"github.com/eden-w2w/lib-modules/modules/order"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
 	"github.com/eden-w2w/lib-modules/modules/promotion_flow"
 	"github.com/eden-w2w/lib-modules/modules/refund_flow"
@@ -19,6 +21,7 @@ import (
 	"github.com/eden-w2w/wechatpay-go/services/refunddomestic"
 	"github.com/silenceper/wechat/v2/miniprogram/subscribe"
 	"github.com/sirupsen/logrus"
+	"sync"
 )
 
 type InventoryLock func(db sqlx.DBExecutor, goodsID uint64, amount uint32) error
@@ -28,6 +31,7 @@ type OrderEvent struct {
 	config   wechat.Wechat
 	locker   InventoryLock
 	unlocker InventoryUnlock
+	sync.Mutex
 }
 
 func NewOrderEvent(config wechat.Wechat, inventoryLocker InventoryLock, inventoryUnlocker InventoryUnlock) *OrderEvent {
@@ -44,21 +48,65 @@ func (o *OrderEvent) OnOrderCreateEvent(
 	goodsList []databases.OrderGoods,
 ) error {
 	for _, item := range goodsList {
-		err := o.locker(db, item.GoodsID, item.Amount)
-		if err != nil {
-			return err
+		if item.IsBooking != datatypes.BOOL_TRUE {
+			err := o.locker(db, item.GoodsID, item.Amount)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func (o *OrderEvent) OnOrderConfirmEvent(db sqlx.DBExecutor, order *databases.Order) error {
+func (o *OrderEvent) OnOrderConfirmEvent(db sqlx.DBExecutor, oModel *databases.Order) error {
+	// 防止并发导致预售销量错误，手动加锁
+	o.Lock()
+	defer o.Unlock()
+
+	// 增加预售销量
+	goodsList, err := order.GetController().GetOrderGoods(oModel.OrderID, db)
+	if err != nil {
+		return err
+	}
+
+	for _, orderGoods := range goodsList {
+		if orderGoods.IsBooking != datatypes.BOOL_TRUE {
+			continue
+		}
+
+		flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
+			orderGoods.GoodsID,
+			enums.BOOKING_STATUS__PROCESS,
+		)
+		if err != nil {
+			return err
+		}
+
+		if len(flows) == 0 {
+			logrus.Warningf(
+				"[OnOrderConfirmEvent] booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus not found, goodsID: %d",
+				orderGoods.GoodsID,
+			)
+			continue
+		}
+
+		var sales = flows[0].Sales + orderGoods.Amount
+		err = booking_flow.GetController().UpdateBookingFlow(
+			&flows[0], booking_flow.UpdateBookingFlowParams{
+				Sales: &sales,
+			}, db,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
 	msg := &subscribe.Message{
-		ToUser:     order.UserOpenID,
+		ToUser:     oModel.UserOpenID,
 		TemplateID: o.config.ConfirmMessageTemplateID,
-		Page:       fmt.Sprintf("%s?orderID=%d", o.config.OrderPage, order.OrderID),
+		Page:       fmt.Sprintf("%s?orderID=%d", o.config.OrderPage, oModel.OrderID),
 		Data: map[string]*subscribe.DataItem{
-			"character_string1": {Value: order.OrderID},
+			"character_string1": {Value: oModel.OrderID},
 			"thing2":            {Value: "已确认"},
 			"thing4":            {Value: "已收到您的付款，正在备货哟"},
 		},
@@ -80,7 +128,26 @@ func (o *OrderEvent) OnOrderDispatchEvent(
 	db sqlx.DBExecutor,
 	order *databases.Order,
 	logistics *databases.OrderLogistics,
+	goodsList []databases.OrderGoods,
 ) error {
+	// 若为预售则需要验证商品是否库存充足并扣减库存
+	for _, orderGoods := range goodsList {
+		if orderGoods.IsBooking == datatypes.BOOL_TRUE {
+			// 检查商品库存
+			gModel, err := goods.GetController().GetGoodsByID(orderGoods.GoodsID, db, true)
+			if err != nil {
+				return err
+			}
+			if gModel.Inventory < uint64(orderGoods.Amount) {
+				return general_errors.GoodsInventoryShortage.StatusError().WithMsg("商品库存不足，请先增加库存")
+			}
+			err = o.locker(db, gModel.GoodsID, orderGoods.Amount)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
 	msg := &subscribe.Message{
 		ToUser:     order.UserOpenID,
 		TemplateID: o.config.DispatchMessageTemplateID,
@@ -104,6 +171,42 @@ func (o *OrderEvent) OnOrderCompleteEvent(
 	logistics *databases.OrderLogistics,
 	goodsList []databases.OrderGoods,
 ) error {
+	// 更新商品销量
+	for _, g := range goodsList {
+		gModel, err := goods.GetController().GetGoodsByID(g.GoodsID, db, true)
+		if err != nil {
+			return err
+		}
+
+		err = goods.GetController().UpdateGoods(
+			gModel.GoodsID, goods.UpdateGoodsParams{
+				Sales: gModel.Sales + g.Amount,
+			}, db,
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	var goodsName = ""
+	if len(goodsList) > 0 {
+		goodsName = goodsList[0].Name
+	}
+	msg := &subscribe.Message{
+		ToUser:     order.UserOpenID,
+		TemplateID: o.config.CompleteMessageTemplateID,
+		Page:       fmt.Sprintf("%s?orderID=%d", o.config.OrderPage, order.OrderID),
+		Data: map[string]*subscribe.DataItem{
+			"character_string5": {Value: order.OrderID},
+			"thing1":            {Value: strings.ShortenString(goodsName, 17, "...")},
+			"thing2":            {Value: strings.ShortenString(logistics.Recipients, 17, "...")},
+			"phone_number3":     {Value: strings.ShortenString(logistics.Mobile, 14, "...")},
+			"time7":             {Value: order.UpdatedAt.Format("2006-01-02 15:04:05")},
+		},
+		MiniprogramState: o.config.ProgramState,
+	}
+	_ = wechat.GetController().SendSubscribeMessage(msg)
+
 	// 获取支付流水
 	flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(
 		order.OrderID,
@@ -148,42 +251,6 @@ func (o *OrderEvent) OnOrderCompleteEvent(
 		}, db,
 	)
 
-	// 更新商品销量
-	for _, g := range goodsList {
-		gModel, err := goods.GetController().GetGoodsByID(g.GoodsID, db, true)
-		if err != nil {
-			return err
-		}
-
-		err = goods.GetController().UpdateGoods(
-			gModel.GoodsID, goods.UpdateGoodsParams{
-				Sales: gModel.Sales + g.Amount,
-			},
-		)
-		if err != nil {
-			return err
-		}
-	}
-
-	var goodsName = ""
-	if len(goodsList) > 0 {
-		goodsName = goodsList[0].Name
-	}
-	msg := &subscribe.Message{
-		ToUser:     order.UserOpenID,
-		TemplateID: o.config.CompleteMessageTemplateID,
-		Page:       fmt.Sprintf("%s?orderID=%d", o.config.OrderPage, order.OrderID),
-		Data: map[string]*subscribe.DataItem{
-			"character_string5": {Value: order.OrderID},
-			"thing1":            {Value: strings.ShortenString(goodsName, 17, "...")},
-			"thing2":            {Value: strings.ShortenString(logistics.Recipients, 17, "...")},
-			"phone_number3":     {Value: strings.ShortenString(logistics.Mobile, 14, "...")},
-			"time7":             {Value: order.UpdatedAt.Format("2006-01-02 15:04:05")},
-		},
-		MiniprogramState: o.config.ProgramState,
-	}
-	_ = wechat.GetController().SendSubscribeMessage(msg)
-
 	return err
 }
 
@@ -194,9 +261,46 @@ func (o *OrderEvent) OnOrderCloseEvent(
 ) error {
 	// 解锁物料
 	for _, g := range goodsList {
-		err := o.unlocker(db, g.GoodsID, g.Amount)
-		if err != nil {
-			return err
+		if g.IsBooking != datatypes.BOOL_TRUE {
+			err := o.unlocker(db, g.GoodsID, g.Amount)
+			if err != nil {
+				return err
+			}
+		} else {
+			o.Lock()
+			// 恢复预售销量
+			flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
+				g.GoodsID,
+				enums.BOOKING_STATUS__PROCESS,
+			)
+			if err != nil {
+				o.Unlock()
+				return err
+			}
+
+			if len(flows) == 0 {
+				logrus.Warningf(
+					"[OnOrderCloseEvent] booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus not found, goodsID: %d",
+					g.GoodsID,
+				)
+				o.Unlock()
+				continue
+			}
+
+			if flows[0].Sales < g.Amount {
+				flows[0].Sales = g.Amount
+			}
+			var sales = flows[0].Sales - g.Amount
+			err = booking_flow.GetController().UpdateBookingFlow(
+				&flows[0], booking_flow.UpdateBookingFlowParams{
+					Sales: &sales,
+				}, db,
+			)
+			if err != nil {
+				o.Unlock()
+				return err
+			}
+			o.Unlock()
 		}
 	}
 

@@ -91,6 +91,4 @@ type UpdateGoodsParams struct {
 	IsAllowBooking datatypes.Bool `json:"isAllowBooking" default:""`
 	// 预计到货时间
 	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" default:""`
-	// 预售销量
-	BookingSales int `json:"bookingSales" default:""`
 }

@@ -9,6 +9,7 @@ import (
 //go:generate eden generate tag OrderGoods --defaults=true
 // @def primary ID
 // @def unique_index U_order_goods_id OrderID GoodsID
+// @def index I_booking BookingFlowID
 type OrderGoods struct {
 	datatypes.PrimaryID
 	// 订单ID
@@ -19,11 +20,11 @@ type OrderGoods struct {
 	// 名称
 	Name string `json:"name" db:"f_name"`
 	// 描述
-	Comment string `json:"comment" db:"f_comment"`
+	Comment string `json:"comment" db:"f_comment,default=''"`
 	// 发货地
 	DispatchAddr string `json:"dispatchAddr" db:"f_dispatch_addr"`
 	// 销量
-	Sales uint32 `json:"sales" db:"f_sales"`
+	Sales uint32 `json:"sales" db:"f_sales,default=0"`
 	// 标题图片
 	MainPicture string `json:"mainPicture" db:"f_main_picture,size=1024"`
 	// 所有展示图片
@@ -31,18 +32,22 @@ type OrderGoods struct {
 	// 规格
 	Specifications types.JsonArrayString `json:"specifications" db:"f_specification,size=1024"`
 	// 活动
-	Activities types.JsonArrayString `json:"activities" db:"f_activities"`
+	Activities types.JsonArrayString `json:"activities" db:"f_activities,null"`
 	// 物流政策
-	LogisticPolicy string `json:"logisticPolicy" db:"f_logistic_policy,size=512"`
+	LogisticPolicy string `json:"logisticPolicy" db:"f_logistic_policy,size=512,default=''"`
 	// 价格
 	Price uint64 `json:"price" db:"f_price"`
 	// 库存
-	Inventory uint64 `json:"inventory" db:"f_inventory"`
+	Inventory uint64 `json:"inventory" db:"f_inventory,default=0"`
 	// 详细介绍
 	Detail string `json:"detail" db:"f_detail,size=65535"`
 	// -------------------------------------------
 	// 数量
 	Amount uint32 `json:"amount" db:"f_amount"`
+	// 是否预订
+	IsBooking datatypes.Bool `json:"isBooking" db:"f_is_booking,default=2"`
+	// 预售单号
+	BookingFlowID uint64 `json:"bookingFlowID,string" db:"f_booking_flow_id,null"`
 
 	datatypes.OperateTime
 }

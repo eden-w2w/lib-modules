@@ -4,6 +4,7 @@ import (
 	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
+	"github.com/eden-w2w/lib-modules/modules/booking_flow"
 	"github.com/eden-w2w/lib-modules/modules/goods"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
@@ -69,14 +70,37 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 				if err != nil {
 					return err
 				}
-				if uint64(g.Amount) > gModel.Inventory {
+
+				var isBooking = datatypes.BOOL_FALSE
+				var bookingFlowID = uint64(0)
+				flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
+					gModel.GoodsID,
+					enums.BOOKING_STATUS__PROCESS,
+				)
+				if err != nil {
+					return err
+				}
+				if len(flows) > 0 {
+					isBooking = datatypes.BOOL_TRUE
+					bookingFlowID = flows[0].FlowID
+				}
+				if isBooking != datatypes.BOOL_TRUE && uint64(g.Amount) > gModel.Inventory {
 					return general_errors.GoodsInventoryShortage
 				}
+				if g.IsBooking && isBooking == datatypes.BOOL_FALSE {
+					return general_errors.GoodsInventorySufficient
+				}
+				if !g.IsBooking && isBooking == datatypes.BOOL_TRUE {
+					return general_errors.GoodsInventoryShortage
+				}
+
 				totalPrice += gModel.Price * uint64(g.Amount)
 				goodsList = append(
 					goodsList, CreateOrderGoodsModelParams{
-						Goods:  *gModel,
-						Amount: g.Amount,
+						Goods:         *gModel,
+						Amount:        g.Amount,
+						IsBooking:     isBooking,
+						BookingFlowID: bookingFlowID,
 					},
 				)
 			}
@@ -162,6 +186,7 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 					Inventory:      item.Inventory,
 					Detail:         item.Detail,
 					Amount:         item.Amount,
+					IsBooking:      item.IsBooking,
 				}
 				err := orderGoods.Create(db)
 				if err != nil {
@@ -511,39 +536,43 @@ func (c Controller) updateOrderGoods(
 			logrus.Errorf("[updateOrderGoods] g.UpdateByOrderIDAndGoodsIDWithStruct err: %v", err)
 			return err
 		}
-		if g.modifiedAmount < 0 {
-			err = unlocker(db, g.GoodsID, uint32(-g.modifiedAmount))
-			if err != nil {
-				logrus.Errorf(
-					"[updateOrderGoods] unlocker err: %v, goodsID: %d, unlockAmount: %d",
-					err,
-					g.GoodsID,
-					-g.modifiedAmount,
-				)
-				return err
-			}
-		} else {
-			err = locker(db, g.GoodsID, uint32(g.modifiedAmount))
-			if err != nil {
-				logrus.Errorf(
-					"[updateOrderGoods] locker err: %v, goodsID: %d, lockAmount: %d",
-					err,
-					g.GoodsID,
-					g.modifiedAmount,
-				)
-				return err
+		if g.IsBooking != datatypes.BOOL_TRUE {
+			if g.modifiedAmount < 0 {
+				err = unlocker(db, g.GoodsID, uint32(-g.modifiedAmount))
+				if err != nil {
+					logrus.Errorf(
+						"[updateOrderGoods] unlocker err: %v, goodsID: %d, unlockAmount: %d",
+						err,
+						g.GoodsID,
+						-g.modifiedAmount,
+					)
+					return err
+				}
+			} else {
+				err = locker(db, g.GoodsID, uint32(g.modifiedAmount))
+				if err != nil {
+					logrus.Errorf(
+						"[updateOrderGoods] locker err: %v, goodsID: %d, lockAmount: %d",
+						err,
+						g.GoodsID,
+						g.modifiedAmount,
+					)
+					return err
+				}
 			}
 		}
 	}
 	for _, g := range deleteGoods {
-		// 释放库存
-		err := unlocker(db, g.GoodsID, g.Amount)
-		if err != nil {
-			logrus.Errorf("[updateOrderGoods] unlocker err: %v", err)
-			return err
+		if g.IsBooking != datatypes.BOOL_TRUE {
+			// 释放库存
+			err := unlocker(db, g.GoodsID, g.Amount)
+			if err != nil {
+				logrus.Errorf("[updateOrderGoods] unlocker err: %v", err)
+				return err
+			}
 		}
 
-		err = g.DeleteByOrderIDAndGoodsID(db)
+		err := g.DeleteByOrderIDAndGoodsID(db)
 		if err != nil {
 			logrus.Errorf("[updateOrderGoods] g.DeleteByOrderIDAndGoodsID err: %v", err)
 			return err
@@ -557,11 +586,26 @@ func (c Controller) updateOrderGoods(
 			return general_errors.GoodsNotFound
 		}
 
-		// 锁定库存
-		err = locker(db, g.GoodsID, g.Amount)
-		if err != nil {
-			logrus.Errorf("[updateOrderGoods] locker err: %v, goodsID: %d", err, g.GoodsID)
-			return err
+		if model.Inventory > 0 && uint64(g.Amount) > model.Inventory {
+			return general_errors.GoodsInventoryShortage
+		}
+
+		var isBooking = datatypes.BOOL_FALSE
+		if model.Inventory == 0 {
+			if model.IsAllowBooking == datatypes.BOOL_TRUE {
+				isBooking = datatypes.BOOL_TRUE
+			} else {
+				return general_errors.GoodsInventoryShortage
+			}
+		}
+
+		if isBooking != datatypes.BOOL_TRUE {
+			// 锁定库存
+			err = locker(db, g.GoodsID, g.Amount)
+			if err != nil {
+				logrus.Errorf("[updateOrderGoods] locker err: %v, goodsID: %d", err, g.GoodsID)
+				return err
+			}
 		}
 
 		// 创建物料
@@ -581,6 +625,7 @@ func (c Controller) updateOrderGoods(
 			Inventory:      model.Inventory,
 			Detail:         model.Detail,
 			Amount:         g.Amount,
+			IsBooking:      isBooking,
 		}
 		err = orderGoods.Create(db)
 		if err != nil {
@@ -683,7 +728,7 @@ func (c Controller) UpdateOrder(
 		// 状态发生变更，执行状态变更事件
 		switch order.Status {
 		case enums.ORDER_STATUS__CONFIRM:
-			_ = c.eventHandler.OnOrderConfirmEvent(db, order)
+			err = c.eventHandler.OnOrderConfirmEvent(db, order)
 		case enums.ORDER_STATUS__PAID:
 			// 获取支付流水
 			flows, err := payment_flow.GetController().MustGetFlowByOrderIDAndStatus(
@@ -697,15 +742,29 @@ func (c Controller) UpdateOrder(
 			}
 			flow := flows[0]
 			err = c.eventHandler.OnOrderPaidEvent(db, order, &flow)
-		case enums.ORDER_STATUS__DISPATCH:
-			_ = c.eventHandler.OnOrderDispatchEvent(db, order, logistics)
-		case enums.ORDER_STATUS__COMPLETE:
-			// 获取商品列表
-			goods, err := c.GetOrderGoods(order.OrderID, db)
 			if err != nil {
 				return err
 			}
-			err = c.eventHandler.OnOrderCompleteEvent(db, order, logistics, goods)
+		case enums.ORDER_STATUS__DISPATCH:
+			// 获取商品列表
+			goodsList, err := c.GetOrderGoods(order.OrderID, db)
+			if err != nil {
+				return err
+			}
+			err = c.eventHandler.OnOrderDispatchEvent(db, order, logistics, goodsList)
+			if err != nil {
+				return err
+			}
+		case enums.ORDER_STATUS__COMPLETE:
+			// 获取商品列表
+			goodsList, err := c.GetOrderGoods(order.OrderID, db)
+			if err != nil {
+				return err
+			}
+			err = c.eventHandler.OnOrderCompleteEvent(db, order, logistics, goodsList)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

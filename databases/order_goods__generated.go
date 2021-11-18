@@ -15,6 +15,14 @@ func (OrderGoods) PrimaryKey() []string {
 	}
 }
 
+func (OrderGoods) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
+	return github_com_eden_framework_sqlx_builder.Indexes{
+		"I_booking": []string{
+			"BookingFlowID",
+		},
+	}
+}
+
 func (OrderGoods) UniqueIndexUOrderGoodsID() string {
 	return "U_order_goods_id"
 }
@@ -33,11 +41,13 @@ func (OrderGoods) Comments() map[string]string {
 	return map[string]string{
 		"Activities":     "活动",
 		"Amount":         "-------------------------------------------",
+		"BookingFlowID":  "预售单号",
 		"Comment":        "描述",
 		"Detail":         "详细介绍",
 		"DispatchAddr":   "发货地",
 		"GoodsID":        "商品ID",
 		"Inventory":      "库存",
+		"IsBooking":      "是否预订",
 		"LogisticPolicy": "物流政策",
 		"MainPicture":    "标题图片",
 		"Name":           "---------------- 商品快照 ------------------",
@@ -79,6 +89,9 @@ func (OrderGoods) ColDescriptions() map[string][]string {
 			"-------------------------------------------",
 			"数量",
 		},
+		"BookingFlowID": []string{
+			"预售单号",
+		},
 		"Comment": []string{
 			"描述",
 		},
@@ -93,6 +106,9 @@ func (OrderGoods) ColDescriptions() map[string][]string {
 		},
 		"Inventory": []string{
 			"库存",
+		},
+		"IsBooking": []string{
+			"是否预订",
 		},
 		"LogisticPolicy": []string{
 			"物流政策",
@@ -250,6 +266,22 @@ func (m *OrderGoods) FieldAmount() *github_com_eden_framework_sqlx_builder.Colum
 	return OrderGoodsTable.F(m.FieldKeyAmount())
 }
 
+func (OrderGoods) FieldKeyIsBooking() string {
+	return "IsBooking"
+}
+
+func (m *OrderGoods) FieldIsBooking() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderGoodsTable.F(m.FieldKeyIsBooking())
+}
+
+func (OrderGoods) FieldKeyBookingFlowID() string {
+	return "BookingFlowID"
+}
+
+func (m *OrderGoods) FieldBookingFlowID() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderGoodsTable.F(m.FieldKeyBookingFlowID())
+}
+
 func (OrderGoods) FieldKeyCreatedAt() string {
 	return "CreatedAt"
 }
@@ -280,6 +312,7 @@ func (OrderGoods) ColRelations() map[string][]string {
 
 func (m *OrderGoods) IndexFieldNames() []string {
 	return []string{
+		"BookingFlowID",
 		"GoodsID",
 		"ID",
 		"OrderID",
@@ -726,6 +759,20 @@ func (m *OrderGoods) Count(db github_com_eden_framework_sqlx.DBExecutor, conditi
 	)
 
 	return count, err
+
+}
+
+func (m *OrderGoods) BatchFetchByBookingFlowIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]OrderGoods, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("BookingFlowID").In(values)
+
+	return m.List(db, condition)
 
 }
 

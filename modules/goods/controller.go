@@ -158,11 +158,15 @@ func (c Controller) UnlockInventory(db sqlx.DBExecutor, goodsID uint64, amount u
 	return general_errors.NotFound
 }
 
-func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams) error {
+func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams, db sqlx.DBExecutor) error {
 	if !c.isInit {
 		logrus.Panicf("[GoodsController] not Init")
 	}
+	if db == nil {
+		db = c.db
+	}
 
+	var zeroFields = make([]string, 0)
 	model := &databases.Goods{GoodsID: goodsID}
 	if params.Name != "" {
 		model.Name = params.Name
@@ -196,6 +200,7 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams) error 
 	}
 	if params.Inventory != nil {
 		model.Inventory = *params.Inventory
+		zeroFields = append(zeroFields, model.FieldKeyInventory())
 	}
 	if params.Detail != "" {
 		model.Detail = params.Detail
@@ -206,10 +211,7 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams) error 
 	if params.EstimatedTimeArrival != datatypes.TimestampZero {
 		model.EstimatedTimeArrival = params.EstimatedTimeArrival
 	}
-	if params.BookingSales != 0 {
-		model.BookingSales = params.BookingSales
-	}
-	err := model.UpdateByGoodsIDWithStruct(c.db, model.FieldKeyInventory())
+	err := model.UpdateByGoodsIDWithStruct(db, zeroFields...)
 	if err != nil {
 		logrus.Errorf("[UpdateGoods] model.UpdateByGoodsIDWithStruct err: %v, params: %+v", err, params)
 		return general_errors.InternalError

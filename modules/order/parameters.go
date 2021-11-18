@@ -17,7 +17,12 @@ type EventHandler interface {
 	OnOrderCreateEvent(db sqlx.DBExecutor, order *databases.Order, goodsList []databases.OrderGoods) error
 	OnOrderPaidEvent(db sqlx.DBExecutor, order *databases.Order, payment *databases.PaymentFlow) error
 	OnOrderConfirmEvent(db sqlx.DBExecutor, order *databases.Order) error
-	OnOrderDispatchEvent(db sqlx.DBExecutor, order *databases.Order, logistics *databases.OrderLogistics) error
+	OnOrderDispatchEvent(
+		db sqlx.DBExecutor,
+		order *databases.Order,
+		logistics *databases.OrderLogistics,
+		goodsList []databases.OrderGoods,
+	) error
 	OnOrderCompleteEvent(
 		db sqlx.DBExecutor,
 		order *databases.Order,
@@ -55,11 +60,15 @@ type CreateOrderGoodsParams struct {
 	GoodsID uint64 `in:"body" json:"goodsID,string"`
 	// 数量
 	Amount uint32 `in:"body" json:"amount"`
+	// 是否预订
+	IsBooking bool `json:"isBooking"`
 }
 
 type CreateOrderGoodsModelParams struct {
 	databases.Goods
-	Amount uint32
+	Amount        uint32
+	IsBooking     datatypes.Bool
+	BookingFlowID uint64
 }
 
 type GetOrdersParams struct {
@@ -123,6 +132,8 @@ type GoodsListResponse struct {
 	Price uint64 `json:"price"`
 	// 数量
 	Amount uint32 `json:"amount"`
+	// 是否预订
+	IsBooking datatypes.Bool `json:"isBooking"`
 }
 
 type GetMyOrdersResponse struct {

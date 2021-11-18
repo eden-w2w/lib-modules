@@ -44,8 +44,6 @@ type Goods struct {
 	IsAllowBooking datatypes.Bool `json:"isAllowBooking" db:"f_is_allow_booking,default=0"`
 	// 预计到货时间
 	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" db:"f_eta,null"`
-	// 预售销量
-	BookingSales int `json:"bookingSales" db:"f_booking_sales,default=0"`
 
 	datatypes.OperateTime
 }
