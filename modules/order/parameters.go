@@ -61,7 +61,7 @@ type CreateOrderGoodsParams struct {
 	// 数量
 	Amount uint32 `in:"body" json:"amount"`
 	// 是否预订
-	IsBooking bool `json:"isBooking"`
+	IsBooking *bool `json:"isBooking"`
 }
 
 type CreateOrderGoodsModelParams struct {

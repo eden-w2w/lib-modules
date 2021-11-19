@@ -87,10 +87,10 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 				if isBooking != datatypes.BOOL_TRUE && uint64(g.Amount) > gModel.Inventory {
 					return general_errors.GoodsInventoryShortage
 				}
-				if g.IsBooking && isBooking == datatypes.BOOL_FALSE {
+				if *g.IsBooking && isBooking == datatypes.BOOL_FALSE {
 					return general_errors.GoodsInventorySufficient
 				}
-				if !g.IsBooking && isBooking == datatypes.BOOL_TRUE {
+				if !*g.IsBooking && isBooking == datatypes.BOOL_TRUE {
 					return general_errors.GoodsInventoryShortage
 				}
 
