@@ -5,6 +5,7 @@ import (
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/modules/booking_flow"
+	"github.com/eden-w2w/lib-modules/modules/discounts"
 	"github.com/eden-w2w/lib-modules/modules/goods"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
@@ -61,7 +62,8 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 
 	tx := sqlx.NewTasks(c.db)
 
-	// 获取订单总额与库中物料进行比对，物料库存检查
+	// 获取订单总额与库中物料进行比对，物料库存检查及优惠计算
+	var discountAmountTotal, actualAmountTotal uint64
 	tx = tx.With(
 		func(db sqlx.DBExecutor) error {
 			var totalPrice uint64 = 0
@@ -116,15 +118,37 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 				logrus.Errorf("[CreateOrder] len(goodsList) == 0")
 				return general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
 			}
-			if p.TotalPrice-p.DiscountAmount != p.ActualAmount {
-				logrus.Errorf(
-					"[CreateOrder] p.TotalPrice - p.DiscountAmount != p.ActualAmount p.TotalPrice: %d, p.DiscountAmount: %d, p.ActualAmount: %d",
-					p.TotalPrice,
-					p.DiscountAmount,
-					p.ActualAmount,
-				)
-				return general_errors.BadRequest.StatusError().WithDesc("订单实际支付金额错误")
+
+			// 计算优惠
+			for _, discountID := range p.Discounts {
+				err := func() error {
+					_ = discounts.GetController().RLock(discountID)
+					defer discounts.GetController().RUnlock(discountID)
+					discount, err := discounts.GetController().GetDiscountByID(discountID, db, true)
+					if err != nil {
+						return err
+					}
+					if discount.Status != enums.DISCOUNT_STATUS__PROCESS {
+						return general_errors.DiscountNotStart
+					}
+					if discount.Limit > 0 && discount.Times == 0 {
+						return general_errors.DiscountEnd
+					}
+					current := time.Now()
+					if current.Before(time.Time(discount.ValidityStart)) {
+						return general_errors.DiscountNotStart
+					} else if current.After(time.Time(discount.ValidityEnd)) {
+						return general_errors.DiscountEnd
+					}
+					_, discountAmount := ToDiscountAmount(discount, goodsList)
+					discountAmountTotal += discountAmount
+					return nil
+				}()
+				if err != nil {
+					return err
+				}
 			}
+			actualAmountTotal = totalPrice - discountAmountTotal
 			return nil
 		},
 	)
@@ -139,8 +163,8 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 				NickName:       u.NickName,
 				UserOpenID:     u.OpenID,
 				TotalPrice:     p.TotalPrice,
-				DiscountAmount: p.DiscountAmount,
-				ActualAmount:   p.ActualAmount,
+				DiscountAmount: discountAmountTotal,
+				ActualAmount:   actualAmountTotal,
 				PaymentMethod:  p.PaymentMethod,
 				Remark:         p.Remark,
 				Status:         enums.ORDER_STATUS__CREATED,
@@ -180,7 +204,6 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 					MainPicture:    item.MainPicture,
 					Pictures:       item.Pictures,
 					Specifications: item.Specifications,
-					Activities:     item.Activities,
 					LogisticPolicy: item.LogisticPolicy,
 					Price:          item.Price,
 					Inventory:      item.Inventory,
@@ -619,7 +642,6 @@ func (c Controller) updateOrderGoods(
 			MainPicture:    model.MainPicture,
 			Pictures:       model.Pictures,
 			Specifications: model.Specifications,
-			Activities:     model.Activities,
 			LogisticPolicy: model.LogisticPolicy,
 			Price:          model.Price,
 			Inventory:      model.Inventory,

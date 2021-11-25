@@ -37,10 +37,6 @@ type CreateOrderParams struct {
 	UserID uint64 `in:"body" default:"" json:"userID,string"`
 	// 订单总额
 	TotalPrice uint64 `in:"body" json:"totalPrice"`
-	// 优惠金额
-	DiscountAmount uint64 `in:"body" default:"" json:"discountAmount"`
-	// 实际金额
-	ActualAmount uint64 `in:"body" json:"actualAmount"`
 	// 支付方式
 	PaymentMethod enums.PaymentMethod `in:"body" json:"paymentMethod"`
 	// 备注
@@ -51,6 +47,8 @@ type CreateOrderParams struct {
 	ShippingAddr string `in:"body" json:"shippingAddr"`
 	// 联系电话
 	Mobile string `in:"body" json:"mobile"`
+	// 优惠信息
+	Discounts []uint64 `json:"discounts"`
 	// 物料信息
 	Goods []CreateOrderGoodsParams `in:"body" json:"goods"`
 }
@@ -126,8 +124,6 @@ type GoodsListResponse struct {
 	MainPicture string `json:"mainPicture"`
 	// 规格
 	Specifications types.JsonArrayString `json:"specifications"`
-	// 活动
-	Activities types.JsonArrayString `json:"activities"`
 	// 价格
 	Price uint64 `json:"price"`
 	// 数量

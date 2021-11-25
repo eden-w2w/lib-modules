@@ -39,7 +39,6 @@ func (OrderGoods) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes
 
 func (OrderGoods) Comments() map[string]string {
 	return map[string]string{
-		"Activities":     "活动",
 		"Amount":         "-------------------------------------------",
 		"BookingFlowID":  "预售单号",
 		"Comment":        "描述",
@@ -82,9 +81,6 @@ func (OrderGoods) TableName() string {
 
 func (OrderGoods) ColDescriptions() map[string][]string {
 	return map[string][]string{
-		"Activities": []string{
-			"活动",
-		},
 		"Amount": []string{
 			"-------------------------------------------",
 			"数量",
@@ -216,14 +212,6 @@ func (OrderGoods) FieldKeySpecifications() string {
 
 func (m *OrderGoods) FieldSpecifications() *github_com_eden_framework_sqlx_builder.Column {
 	return OrderGoodsTable.F(m.FieldKeySpecifications())
-}
-
-func (OrderGoods) FieldKeyActivities() string {
-	return "Activities"
-}
-
-func (m *OrderGoods) FieldActivities() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderGoodsTable.F(m.FieldKeyActivities())
 }
 
 func (OrderGoods) FieldKeyLogisticPolicy() string {

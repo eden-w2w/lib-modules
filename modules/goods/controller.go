@@ -189,9 +189,6 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams, db sql
 	if len(params.Specifications) > 0 {
 		model.Specifications = params.Specifications
 	}
-	if len(params.Activities) > 0 {
-		model.Activities = params.Activities
-	}
 	if params.LogisticPolicy != "" {
 		model.LogisticPolicy = params.LogisticPolicy
 	}
@@ -232,7 +229,6 @@ func (c Controller) CreateGoods(params CreateGoodsParams) (*databases.Goods, err
 		MainPicture:          params.MainPicture,
 		Pictures:             params.Pictures,
 		Specifications:       params.Specifications,
-		Activities:           params.Activities,
 		LogisticPolicy:       params.LogisticPolicy,
 		Price:                params.Price,
 		Detail:               params.Detail,

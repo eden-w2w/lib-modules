@@ -16,6 +16,10 @@ const (
 	GoodsInventoryShortage
 	// @errTalk 商品库存充足无法创建预订订单，请刷新页面重试
 	GoodsInventorySufficient
+	// @errTalk 优惠活动未开始
+	DiscountNotStart
+	// @errTalk 优惠活动已结束
+	DiscountEnd
 )
 
 const (

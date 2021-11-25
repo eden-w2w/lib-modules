@@ -31,8 +31,6 @@ type OrderGoods struct {
 	Pictures types.GoodsPictures `json:"pictures" db:"f_pictures,size=65535"`
 	// 规格
 	Specifications types.JsonArrayString `json:"specifications" db:"f_specification,size=1024"`
-	// 活动
-	Activities types.JsonArrayString `json:"activities" db:"f_activities,null"`
 	// 物流政策
 	LogisticPolicy string `json:"logisticPolicy" db:"f_logistic_policy,size=512,default=''"`
 	// 价格

@@ -30,7 +30,6 @@ func (Goods) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
 
 func (Goods) Comments() map[string]string {
 	return map[string]string{
-		"Activities":           "活动",
 		"Comment":              "描述",
 		"Detail":               "详细介绍",
 		"DispatchAddr":         "发货地",
@@ -71,9 +70,6 @@ func (Goods) TableName() string {
 
 func (Goods) ColDescriptions() map[string][]string {
 	return map[string][]string{
-		"Activities": []string{
-			"活动",
-		},
 		"Comment": []string{
 			"描述",
 		},
@@ -189,14 +185,6 @@ func (Goods) FieldKeySpecifications() string {
 
 func (m *Goods) FieldSpecifications() *github_com_eden_framework_sqlx_builder.Column {
 	return GoodsTable.F(m.FieldKeySpecifications())
-}
-
-func (Goods) FieldKeyActivities() string {
-	return "Activities"
-}
-
-func (m *Goods) FieldActivities() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyActivities())
 }
 
 func (Goods) FieldKeyLogisticPolicy() string {
