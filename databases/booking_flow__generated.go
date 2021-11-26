@@ -45,14 +45,15 @@ func (BookingFlow) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexe
 
 func (BookingFlow) Comments() map[string]string {
 	return map[string]string{
-		"EndTime":   "预售结束时间",
-		"FlowID":    "业务ID",
-		"GoodsID":   "商品ID",
-		"Limit":     "预售限量",
-		"Sales":     "预售销量",
-		"StartTime": "预售开始时间",
-		"Status":    "预售状态",
-		"Type":      "预售模式",
+		"EndTime":              "预售结束时间",
+		"EstimatedTimeArrival": "预计到货时间",
+		"FlowID":               "业务ID",
+		"GoodsID":              "商品ID",
+		"Limit":                "预售限量",
+		"Sales":                "预售销量",
+		"StartTime":            "预售开始时间",
+		"Status":               "预售状态",
+		"Type":                 "预售模式",
 	}
 }
 
@@ -81,6 +82,9 @@ func (BookingFlow) ColDescriptions() map[string][]string {
 	return map[string][]string{
 		"EndTime": []string{
 			"预售结束时间",
+		},
+		"EstimatedTimeArrival": []string{
+			"预计到货时间",
 		},
 		"FlowID": []string{
 			"业务ID",
@@ -176,6 +180,14 @@ func (BookingFlow) FieldKeyEndTime() string {
 
 func (m *BookingFlow) FieldEndTime() *github_com_eden_framework_sqlx_builder.Column {
 	return BookingFlowTable.F(m.FieldKeyEndTime())
+}
+
+func (BookingFlow) FieldKeyEstimatedTimeArrival() string {
+	return "EstimatedTimeArrival"
+}
+
+func (m *BookingFlow) FieldEstimatedTimeArrival() *github_com_eden_framework_sqlx_builder.Column {
+	return BookingFlowTable.F(m.FieldKeyEstimatedTimeArrival())
 }
 
 func (BookingFlow) FieldKeyCreatedAt() string {

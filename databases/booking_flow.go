@@ -29,6 +29,8 @@ type BookingFlow struct {
 	StartTime datatypes.MySQLTimestamp `json:"startTime" db:"f_start_time"`
 	// 预售结束时间
 	EndTime datatypes.MySQLTimestamp `json:"endTime" db:"f_end_time,null"`
+	// 预计到货时间
+	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" db:"f_eta,null"`
 
 	datatypes.OperateTime
 }

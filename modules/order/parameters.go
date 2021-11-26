@@ -32,6 +32,15 @@ type EventHandler interface {
 	OnOrderCloseEvent(db sqlx.DBExecutor, order *databases.Order, goodsList []databases.OrderGoods) error
 }
 
+type PreCreateOrderParams struct {
+	// 用户ID
+	UserID uint64 `in:"body" default:"" json:"userID,string"`
+	// 优惠信息
+	Discounts types.Uint64List `json:"discounts" default:""`
+	// 物料信息
+	Goods []CreateOrderGoodsParams `in:"body" json:"goods"`
+}
+
 type CreateOrderParams struct {
 	// 用户ID
 	UserID uint64 `in:"body" default:"" json:"userID,string"`
@@ -48,7 +57,7 @@ type CreateOrderParams struct {
 	// 联系电话
 	Mobile string `in:"body" json:"mobile"`
 	// 优惠信息
-	Discounts []uint64 `json:"discounts"`
+	Discounts types.Uint64List `json:"discounts" default:""`
 	// 物料信息
 	Goods []CreateOrderGoodsParams `in:"body" json:"goods"`
 }
@@ -60,6 +69,19 @@ type CreateOrderGoodsParams struct {
 	Amount uint32 `in:"body" json:"amount"`
 	// 是否预订
 	IsBooking *bool `json:"isBooking"`
+}
+
+type PreCreateOrderGoodsParams struct {
+	// 商品ID
+	GoodsID uint64 `in:"body" json:"goodsID,string"`
+	// 数量
+	Amount uint32 `in:"body" json:"amount"`
+	// 是否预订
+	IsBooking *bool `json:"isBooking"`
+	// 商品金额
+	Price uint64 `json:"price"`
+	// 折扣金额
+	DiscountPrice uint64 `json:"discountPrice"`
 }
 
 type CreateOrderGoodsModelParams struct {
@@ -139,6 +161,10 @@ type GetMyOrdersResponse struct {
 	UserID uint64 `json:"userID,string"`
 	// 订单总额
 	TotalPrice uint64 `json:"totalPrice"`
+	// 优惠金额
+	DiscountAmount uint64 `json:"discountAmount"`
+	// 实际金额
+	ActualAmount uint64 `json:"actualAmount"`
 	// 支付方式
 	PaymentMethod enums.PaymentMethod `json:"paymentMethod"`
 	// 订单状态

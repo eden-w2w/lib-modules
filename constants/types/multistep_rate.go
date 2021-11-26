@@ -9,7 +9,9 @@ type MultiStepRate struct {
 	// 总价下限>=
 	Min uint64 `json:"min"`
 	// 总价上限<
-	Max uint64 `json:"max"`
+	Max uint64 `json:"max" default:""`
+	// 无上限
+	NoMax bool `json:"noMax" default:""`
 	// 折扣
 	Rate float64 `json:"rate"`
 }
@@ -18,8 +20,14 @@ type MultiStepRateConfig []MultiStepRate
 
 func (m MultiStepRateConfig) DiscountAmount(totalPrice uint64) uint64 {
 	for _, reduction := range m {
-		if totalPrice >= reduction.Min && totalPrice < reduction.Max {
-			return uint64(float64(totalPrice) * reduction.Rate)
+		if reduction.NoMax {
+			if totalPrice >= reduction.Min {
+				return uint64(float64(totalPrice) * reduction.Rate)
+			}
+		} else {
+			if totalPrice >= reduction.Min && totalPrice < reduction.Max {
+				return uint64(float64(totalPrice) * (1.0 - reduction.Rate))
+			}
 		}
 	}
 	return 0

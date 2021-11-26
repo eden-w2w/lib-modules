@@ -40,8 +40,6 @@ type Goods struct {
 	Detail string `json:"detail" db:"f_detail,size=65535"`
 	// 是否开启无货后预订模式
 	IsAllowBooking datatypes.Bool `json:"isAllowBooking" db:"f_is_allow_booking,default=0"`
-	// 预计到货时间
-	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" db:"f_eta,null"`
 
 	datatypes.OperateTime
 }

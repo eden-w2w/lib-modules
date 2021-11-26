@@ -42,6 +42,102 @@ func (c *Controller) Init(db sqlx.DBExecutor, d time.Duration, h EventHandler) {
 	c.isInit = true
 }
 
+func (c Controller) PreCreateOrder(p PreCreateOrderParams) (preGoodsList []PreCreateOrderGoodsParams, totalPrice, discountPrice, actualPrice uint64, err error) {
+	if !c.isInit {
+		logrus.Panicf("[OrderController] not Init")
+	}
+	if p.UserID == 0 {
+		logrus.Error("[CreateOrder] userID cannot be empty")
+		return nil, 0, 0, 0, general_errors.BadRequest
+	}
+	// 获取用户信息
+	_, err = user.GetController().GetUserByUserID(p.UserID, nil, false)
+	if err != nil {
+		return
+	}
+
+	// 获取订单总额与库中物料进行比对，物料库存检查及优惠计算
+	var goodsList = make([]CreateOrderGoodsModelParams, 0)
+	for _, g := range p.Goods {
+		gModel, err := goods.GetController().GetGoodsByID(g.GoodsID, nil, false)
+		if err != nil {
+			return nil, 0, 0, 0, err
+		}
+
+		var isBooking = datatypes.BOOL_FALSE
+		var bookingFlowID = uint64(0)
+		flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
+			gModel.GoodsID,
+			enums.BOOKING_STATUS__PROCESS,
+		)
+		if err != nil {
+			return nil, 0, 0, 0, err
+		}
+		if len(flows) > 0 {
+			isBooking = datatypes.BOOL_TRUE
+			bookingFlowID = flows[0].FlowID
+		}
+		if isBooking != datatypes.BOOL_TRUE && uint64(g.Amount) > gModel.Inventory {
+			return nil, 0, 0, 0, general_errors.GoodsInventoryShortage
+		}
+		if *g.IsBooking && isBooking == datatypes.BOOL_FALSE {
+			return nil, 0, 0, 0, general_errors.GoodsInventorySufficient
+		}
+		if !*g.IsBooking && isBooking == datatypes.BOOL_TRUE {
+			return nil, 0, 0, 0, general_errors.GoodsInventoryShortage
+		}
+
+		totalPrice += gModel.Price * uint64(g.Amount)
+		goodsList = append(
+			goodsList, CreateOrderGoodsModelParams{
+				Goods:         *gModel,
+				Amount:        g.Amount,
+				IsBooking:     isBooking,
+				BookingFlowID: bookingFlowID,
+			},
+		)
+	}
+	if len(goodsList) == 0 {
+		logrus.Errorf("[CreateOrder] len(goodsList) == 0")
+		return nil, 0, 0, 0, general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
+	}
+
+	// 计算优惠，目前暂时只支持同时进行一种优惠
+	if len(p.Discounts) > 0 {
+		discountID := p.Discounts[0]
+		err := func() error {
+			_ = discounts.GetController().RLock(discountID)
+			defer discounts.GetController().RUnlock(discountID)
+			discount, err := discounts.GetController().GetDiscountByID(discountID, nil, false)
+			if err != nil {
+				return err
+			}
+			if discount.Status != enums.DISCOUNT_STATUS__PROCESS {
+				return general_errors.DiscountNotStart
+			}
+			if discount.Limit > 0 && discount.Times >= uint64(discount.Limit) {
+				return general_errors.DiscountEnd
+			}
+			current := time.Now()
+			if current.Before(time.Time(discount.ValidityStart)) {
+				return general_errors.DiscountNotStart
+			} else if current.After(time.Time(discount.ValidityEnd)) {
+				return general_errors.DiscountEnd
+			}
+
+			var discountAmount uint64
+			preGoodsList, _, discountAmount = ToDiscountAmount(discount, goodsList)
+			discountPrice += discountAmount
+			return nil
+		}()
+		if err != nil {
+			return nil, 0, 0, 0, err
+		}
+	}
+	actualPrice = totalPrice - discountPrice
+	return
+}
+
 func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 	if !c.isInit {
 		logrus.Panicf("[OrderController] not Init")
@@ -119,8 +215,9 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 				return general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
 			}
 
-			// 计算优惠
-			for _, discountID := range p.Discounts {
+			// 计算优惠，目前暂时只支持同时进行一种优惠
+			if len(p.Discounts) > 0 {
+				discountID := p.Discounts[0]
 				err := func() error {
 					_ = discounts.GetController().RLock(discountID)
 					defer discounts.GetController().RUnlock(discountID)
@@ -131,7 +228,7 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 					if discount.Status != enums.DISCOUNT_STATUS__PROCESS {
 						return general_errors.DiscountNotStart
 					}
-					if discount.Limit > 0 && discount.Times == 0 {
+					if discount.Limit > 0 && discount.Times >= uint64(discount.Limit) {
 						return general_errors.DiscountEnd
 					}
 					current := time.Now()
@@ -140,7 +237,7 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 					} else if current.After(time.Time(discount.ValidityEnd)) {
 						return general_errors.DiscountEnd
 					}
-					_, discountAmount := ToDiscountAmount(discount, goodsList)
+					_, _, discountAmount := ToDiscountAmount(discount, goodsList)
 					discountAmountTotal += discountAmount
 					return nil
 				}()

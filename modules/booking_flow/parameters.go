@@ -19,17 +19,20 @@ type CreateBookingFlowParams struct {
 	// 预售开始时间
 	StartTime datatypes.MySQLTimestamp `json:"startTime"`
 	// 预售结束时间
-	EndTime datatypes.MySQLTimestamp `json:"endTime"`
+	EndTime datatypes.MySQLTimestamp `json:"endTime" default:""`
+	// 预计到货时间
+	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" default:""`
 }
 
 func (c CreateBookingFlowParams) Model() *databases.BookingFlow {
 	model := &databases.BookingFlow{
-		GoodsID:   c.GoodsID,
-		Limit:     c.Limit,
-		Type:      c.Type,
-		Status:    enums.BOOKING_STATUS__READY,
-		StartTime: c.StartTime,
-		EndTime:   c.EndTime,
+		GoodsID:              c.GoodsID,
+		Limit:                c.Limit,
+		Type:                 c.Type,
+		Status:               enums.BOOKING_STATUS__READY,
+		StartTime:            c.StartTime,
+		EndTime:              c.EndTime,
+		EstimatedTimeArrival: c.EstimatedTimeArrival,
 	}
 	if time.Now().Before(time.Time(c.StartTime)) {
 		model.Status = enums.BOOKING_STATUS__PROCESS
@@ -50,6 +53,8 @@ type UpdateBookingFlowParams struct {
 	StartTime datatypes.MySQLTimestamp `json:"startTime" default:""`
 	// 预售结束时间
 	EndTime datatypes.MySQLTimestamp `json:"endTime" default:""`
+	// 预计到货时间
+	EstimatedTimeArrival datatypes.MySQLTimestamp `json:"eta" default:""`
 }
 
 func (p *UpdateBookingFlowParams) Fill(model *databases.BookingFlow) (zeroFields []string) {
@@ -76,6 +81,9 @@ func (p *UpdateBookingFlowParams) Fill(model *databases.BookingFlow) (zeroFields
 	}
 	if p.EndTime != datatypes.TimestampZero {
 		model.EndTime = p.EndTime
+	}
+	if p.EstimatedTimeArrival != datatypes.TimestampZero {
+		model.EstimatedTimeArrival = p.EstimatedTimeArrival
 	}
 	return
 }

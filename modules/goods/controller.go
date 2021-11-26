@@ -205,9 +205,6 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams, db sql
 	if params.IsAllowBooking != datatypes.BOOL_UNKNOWN {
 		model.IsAllowBooking = params.IsAllowBooking
 	}
-	if params.EstimatedTimeArrival != datatypes.TimestampZero {
-		model.EstimatedTimeArrival = params.EstimatedTimeArrival
-	}
 	err := model.UpdateByGoodsIDWithStruct(db, zeroFields...)
 	if err != nil {
 		logrus.Errorf("[UpdateGoods] model.UpdateByGoodsIDWithStruct err: %v, params: %+v", err, params)
@@ -222,18 +219,17 @@ func (c Controller) CreateGoods(params CreateGoodsParams) (*databases.Goods, err
 	}
 
 	model := &databases.Goods{
-		Name:                 params.Name,
-		Comment:              params.Comment,
-		DispatchAddr:         params.DispatchAddr,
-		Sales:                params.Sales,
-		MainPicture:          params.MainPicture,
-		Pictures:             params.Pictures,
-		Specifications:       params.Specifications,
-		LogisticPolicy:       params.LogisticPolicy,
-		Price:                params.Price,
-		Detail:               params.Detail,
-		IsAllowBooking:       params.IsAllowBooking,
-		EstimatedTimeArrival: params.EstimatedTimeArrival,
+		Name:           params.Name,
+		Comment:        params.Comment,
+		DispatchAddr:   params.DispatchAddr,
+		Sales:          params.Sales,
+		MainPicture:    params.MainPicture,
+		Pictures:       params.Pictures,
+		Specifications: params.Specifications,
+		LogisticPolicy: params.LogisticPolicy,
+		Price:          params.Price,
+		Detail:         params.Detail,
+		IsAllowBooking: params.IsAllowBooking,
 	}
 	if params.Inventory != nil {
 		model.Inventory = *params.Inventory

@@ -30,20 +30,19 @@ func (Goods) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
 
 func (Goods) Comments() map[string]string {
 	return map[string]string{
-		"Comment":              "描述",
-		"Detail":               "详细介绍",
-		"DispatchAddr":         "发货地",
-		"EstimatedTimeArrival": "预计到货时间",
-		"GoodsID":              "业务ID",
-		"Inventory":            "库存",
-		"IsAllowBooking":       "是否开启无货后预订模式",
-		"LogisticPolicy":       "物流政策",
-		"MainPicture":          "标题图片",
-		"Name":                 "名称",
-		"Pictures":             "所有展示图片",
-		"Price":                "价格",
-		"Sales":                "销量",
-		"Specifications":       "规格",
+		"Comment":        "描述",
+		"Detail":         "详细介绍",
+		"DispatchAddr":   "发货地",
+		"GoodsID":        "业务ID",
+		"Inventory":      "库存",
+		"IsAllowBooking": "是否开启无货后预订模式",
+		"LogisticPolicy": "物流政策",
+		"MainPicture":    "标题图片",
+		"Name":           "名称",
+		"Pictures":       "所有展示图片",
+		"Price":          "价格",
+		"Sales":          "销量",
+		"Specifications": "规格",
 	}
 }
 
@@ -78,9 +77,6 @@ func (Goods) ColDescriptions() map[string][]string {
 		},
 		"DispatchAddr": []string{
 			"发货地",
-		},
-		"EstimatedTimeArrival": []string{
-			"预计到货时间",
 		},
 		"GoodsID": []string{
 			"业务ID",
@@ -225,14 +221,6 @@ func (Goods) FieldKeyIsAllowBooking() string {
 
 func (m *Goods) FieldIsAllowBooking() *github_com_eden_framework_sqlx_builder.Column {
 	return GoodsTable.F(m.FieldKeyIsAllowBooking())
-}
-
-func (Goods) FieldKeyEstimatedTimeArrival() string {
-	return "EstimatedTimeArrival"
-}
-
-func (m *Goods) FieldEstimatedTimeArrival() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyEstimatedTimeArrival())
 }
 
 func (Goods) FieldKeyCreatedAt() string {
