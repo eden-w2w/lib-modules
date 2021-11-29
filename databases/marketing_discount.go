@@ -36,6 +36,8 @@ type MarketingDiscount struct {
 	// 优惠上限
 	DiscountLimit uint64 `json:"discountLimit" db:"f_discount_limit,default=0"`
 
+	// 总价满额单价优惠阈值
+	MinTotalPrice uint64 `json:"minTotalPrice" db:"f_min_total_price,default=0"`
 	// 单价折扣比例
 	DiscountRate float64 `json:"discountRate" db:"f_discount_rate,null"`
 	// 阶梯式折扣比例

@@ -13,7 +13,7 @@ type CreateBookingFlowParams struct {
 	// 商品ID
 	GoodsID uint64 `json:"goodsID,string"`
 	// 预售限量
-	Limit uint32 `json:"limit"`
+	Limit uint32 `json:"limit" default:""`
 	// 预售模式
 	Type enums.BookingType `json:"type"`
 	// 预售开始时间

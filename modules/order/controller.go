@@ -42,7 +42,11 @@ func (c *Controller) Init(db sqlx.DBExecutor, d time.Duration, h EventHandler) {
 	c.isInit = true
 }
 
-func (c Controller) PreCreateOrder(p PreCreateOrderParams) (preGoodsList []PreCreateOrderGoodsParams, totalPrice, discountPrice, actualPrice uint64, err error) {
+func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
+	preGoodsList []PreCreateOrderGoodsParams,
+	totalPrice, discountPrice, actualPrice uint64,
+	err error,
+) {
 	if !c.isInit {
 		logrus.Panicf("[OrderController] not Init")
 	}

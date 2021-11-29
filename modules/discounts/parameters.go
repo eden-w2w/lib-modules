@@ -29,6 +29,8 @@ type CreateDiscountParams struct {
 	// 优惠上限
 	DiscountLimit uint64 `json:"discountLimit" default:""`
 
+	// 总价满额单价优惠阈值
+	MinTotalPrice uint64 `json:"minTotalPrice" default:""`
 	// 单价折扣比例
 	DiscountRate float64 `json:"discountRate" default:""`
 	// 阶梯式折扣比例
@@ -78,6 +80,7 @@ func (p CreateDiscountParams) Model() (model *databases.MarketingDiscount, err e
 		UserLimit:          p.UserLimit,
 		Limit:              p.Limit,
 		DiscountLimit:      p.DiscountLimit,
+		MinTotalPrice:      p.MinTotalPrice,
 		DiscountRate:       p.DiscountRate,
 		MultiStepRate:      p.MultiStepRate,
 		DiscountAmount:     p.DiscountAmount,
@@ -145,6 +148,8 @@ type UpdateDiscountParams struct {
 	// 优惠上限
 	DiscountLimit *uint64 `json:"discountLimit" default:""`
 
+	// 总价满额单价优惠阈值
+	MinTotalPrice *uint64 `json:"minTotalPrice" default:""`
 	// 单价折扣比例
 	DiscountRate float64 `json:"discountRate" default:""`
 	// 阶梯式折扣比例
@@ -180,6 +185,9 @@ func (p *UpdateDiscountParams) Fill(model *databases.MarketingDiscount) {
 	}
 	if p.DiscountLimit != nil {
 		model.DiscountLimit = *p.DiscountLimit
+	}
+	if p.MinTotalPrice != nil {
+		model.MinTotalPrice = *p.MinTotalPrice
 	}
 	if p.DiscountRate != 0 {
 		model.DiscountRate = p.DiscountRate
