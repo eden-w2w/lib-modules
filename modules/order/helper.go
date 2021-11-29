@@ -3,6 +3,7 @@ package order
 import (
 	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/databases"
+	"github.com/shopspring/decimal"
 )
 
 func ToDiscountAmount(
@@ -25,7 +26,9 @@ func ToDiscountAmount(
 				}
 			} else if model.Type == enums.DISCOUNT_TYPE__ALL_PERCENT {
 				if model.MinTotalPrice == 0 || totalAmount >= model.MinTotalPrice {
-					discountPrice = uint64((1.0 - model.DiscountRate) * float64(item.Price))
+					discountPrice = uint64(decimal.NewFromInt(1).
+						Sub(decimal.NewFromFloat(model.DiscountRate)).
+						Mul(decimal.NewFromInt(int64(item.Price))).IntPart())
 					discountAmount += discountPrice * uint64(item.Amount)
 				}
 			}

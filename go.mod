@@ -9,6 +9,7 @@ require (
 	github.com/eden-w2w/wechatpay-go v0.2.12-0.20211113040433-9a6f58350e2d
 	github.com/profzone/envconfig v1.5.2 // indirect
 	github.com/robfig/cron/v3 v3.0.0
+	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/silenceper/wechat/v2 v2.0.9
 	github.com/sirupsen/logrus v1.8.1
 	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
