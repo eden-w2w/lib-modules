@@ -32,6 +32,14 @@ func ToDiscountAmount(
 					discountAmount += discountPrice * uint64(item.Amount)
 				}
 			}
+		} else if model.Cal == enums.DISCOUNT_CAL__MULTISTEP_UNIT {
+			if model.Type == enums.DISCOUNT_TYPE__ALL {
+				discountPrice = model.MultiStepReduction.DiscountAmount(totalAmount)
+				discountAmount += discountPrice * uint64(item.Amount)
+			} else if model.Type == enums.DISCOUNT_TYPE__ALL_PERCENT {
+				discountPrice = model.MultiStepRate.DiscountAmountUnit(totalAmount, item.Price)
+				discountAmount += discountPrice * uint64(item.Amount)
+			}
 		}
 		preGoodsList = append(
 			preGoodsList, PreCreateOrderGoodsParams{
