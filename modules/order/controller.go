@@ -6,6 +6,7 @@ import (
 	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/modules/booking_flow"
 	"github.com/eden-w2w/lib-modules/modules/discounts"
+	"github.com/eden-w2w/lib-modules/modules/freight_trial"
 	"github.com/eden-w2w/lib-modules/modules/goods"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/eden-w2w/lib-modules/modules/payment_flow"
@@ -44,7 +45,8 @@ func (c *Controller) Init(db sqlx.DBExecutor, d time.Duration, h EventHandler) {
 
 func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 	preGoodsList []PreCreateOrderGoodsParams,
-	totalPrice, discountPrice, actualPrice uint64,
+	totalPrice, freightPrice, discountPrice, actualPrice uint64,
+	freightName string,
 	err error,
 ) {
 	if !c.isInit {
@@ -52,7 +54,7 @@ func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 	}
 	if p.UserID == 0 {
 		logrus.Error("[CreateOrder] userID cannot be empty")
-		return nil, 0, 0, 0, general_errors.BadRequest
+		return nil, 0, 0, 0, 0, "", general_errors.BadRequest
 	}
 	// 获取用户信息
 	_, err = user.GetController().GetUserByUserID(p.UserID, nil, false)
@@ -61,11 +63,11 @@ func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 	}
 
 	// 获取订单总额与库中物料进行比对，物料库存检查及优惠计算
-	var goodsList = make([]CreateOrderGoodsModelParams, 0)
+	var goodsList = make([]freight_trial.FreightTrialParams, 0)
 	for _, g := range p.Goods {
 		gModel, err := goods.GetController().GetGoodsByID(g.GoodsID, nil, false)
 		if err != nil {
-			return nil, 0, 0, 0, err
+			return nil, 0, 0, 0, 0, "", err
 		}
 
 		var isBooking = datatypes.BOOL_FALSE
@@ -75,25 +77,25 @@ func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 			enums.BOOKING_STATUS__PROCESS,
 		)
 		if err != nil {
-			return nil, 0, 0, 0, err
+			return nil, 0, 0, 0, 0, "", err
 		}
 		if len(flows) > 0 {
 			isBooking = datatypes.BOOL_TRUE
 			bookingFlowID = flows[0].FlowID
 		}
 		if isBooking != datatypes.BOOL_TRUE && uint64(g.Amount) > gModel.Inventory {
-			return nil, 0, 0, 0, general_errors.GoodsInventoryShortage
+			return nil, 0, 0, 0, 0, "", general_errors.GoodsInventoryShortage
 		}
 		if *g.IsBooking && isBooking == datatypes.BOOL_FALSE {
-			return nil, 0, 0, 0, general_errors.GoodsInventorySufficient
+			return nil, 0, 0, 0, 0, "", general_errors.GoodsInventorySufficient
 		}
 		if !*g.IsBooking && isBooking == datatypes.BOOL_TRUE {
-			return nil, 0, 0, 0, general_errors.GoodsInventoryShortage
+			return nil, 0, 0, 0, 0, "", general_errors.GoodsInventoryShortage
 		}
 
 		totalPrice += gModel.Price * uint64(g.Amount)
 		goodsList = append(
-			goodsList, CreateOrderGoodsModelParams{
+			goodsList, freight_trial.FreightTrialParams{
 				Goods:         *gModel,
 				Amount:        g.Amount,
 				IsBooking:     isBooking,
@@ -103,7 +105,17 @@ func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 	}
 	if len(goodsList) == 0 {
 		logrus.Errorf("[CreateOrder] len(goodsList) == 0")
-		return nil, 0, 0, 0, general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
+		return nil, 0, 0, 0, 0, "", general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
+	}
+
+	// 试算运费
+	shipping, err := user.GetController().GetShippingAddressByShippingID(p.ShippingID, p.UserID)
+	if err != nil {
+		return nil, 0, 0, 0, 0, "", err
+	}
+	freightPrice, freightName, err = freight_trial.FreightTrial(goodsList, shipping)
+	if err != nil {
+		return nil, 0, 0, 0, 0, "", err
 	}
 
 	// 计算优惠，目前暂时只支持同时进行一种优惠
@@ -135,10 +147,10 @@ func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 			return nil
 		}()
 		if err != nil {
-			return nil, 0, 0, 0, err
+			return nil, 0, 0, 0, 0, "", err
 		}
 	}
-	actualPrice = totalPrice - discountPrice
+	actualPrice = totalPrice + freightPrice - discountPrice
 	return
 }
 
@@ -158,12 +170,12 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 
 	var order *databases.Order
 	var orderGoodsList = make([]databases.OrderGoods, 0)
-	var goodsList = make([]CreateOrderGoodsModelParams, 0)
+	var goodsList = make([]freight_trial.FreightTrialParams, 0)
 
 	tx := sqlx.NewTasks(c.db)
 
 	// 获取订单总额与库中物料进行比对，物料库存检查及优惠计算
-	var discountAmountTotal, actualAmountTotal uint64
+	var discountAmountTotal, freightAmountTotal, actualAmountTotal uint64
 	tx = tx.With(
 		func(db sqlx.DBExecutor) error {
 			var totalPrice uint64 = 0
@@ -198,7 +210,7 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 
 				totalPrice += gModel.Price * uint64(g.Amount)
 				goodsList = append(
-					goodsList, CreateOrderGoodsModelParams{
+					goodsList, freight_trial.FreightTrialParams{
 						Goods:         *gModel,
 						Amount:        g.Amount,
 						IsBooking:     isBooking,
@@ -206,17 +218,36 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 					},
 				)
 			}
+
+			if len(goodsList) == 0 {
+				logrus.Errorf("[CreateOrder] len(goodsList) == 0")
+				return general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
+			}
+
 			if totalPrice != p.TotalPrice {
 				logrus.Errorf(
 					"[CreateOrder] totalPrice != p.TotalPrice totalPrice: %d, p.TotalPrice: %d",
 					totalPrice,
 					p.TotalPrice,
 				)
-				return general_errors.BadRequest.StatusError().WithDesc("订单总额与商品总价不一致")
+				return general_errors.BadRequest.StatusError().WithoutErrTalk().WithMsg("订单总额与商品总价不一致，请尝试返回重新下单")
 			}
-			if len(goodsList) == 0 {
-				logrus.Errorf("[CreateOrder] len(goodsList) == 0")
-				return general_errors.BadRequest.StatusError().WithDesc("商品列表为空")
+
+			shipping, err := user.GetController().GetShippingAddressByShippingID(p.ShippingID, p.UserID)
+			if err != nil {
+				return err
+			}
+			freightAmountTotal, _, err = freight_trial.FreightTrial(goodsList, shipping)
+			if err != nil {
+				return err
+			}
+			if freightAmountTotal != p.FreightAmount {
+				logrus.Errorf(
+					"[CreateOrder] freightAmountTotal != p.FreightAmount freightAmountTotal: %d, p.FreightAmount: %d",
+					freightAmountTotal,
+					p.FreightAmount,
+				)
+				return general_errors.BadRequest.StatusError().WithoutErrTalk().WithMsg("订单运费核验失败，请尝试返回重新下单")
 			}
 
 			// 计算优惠，目前暂时只支持同时进行一种优惠
@@ -249,7 +280,9 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 					return err
 				}
 			}
-			actualAmountTotal = totalPrice - discountAmountTotal
+
+			// 计算实际订单金额
+			actualAmountTotal = totalPrice + freightAmountTotal - discountAmountTotal
 			return nil
 		},
 	)
@@ -257,7 +290,7 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 	// 创建订单
 	tx = tx.With(
 		func(db sqlx.DBExecutor) error {
-			id, _ := id_generator.GetGenerator().GenerateUniqueID()
+			id := id_generator.GetGenerator().GenerateUniqueID()
 			order = &databases.Order{
 				OrderID:        id,
 				UserID:         p.UserID,
@@ -265,6 +298,7 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 				UserOpenID:     u.OpenID,
 				TotalPrice:     p.TotalPrice,
 				DiscountAmount: discountAmountTotal,
+				FreightAmount:  p.FreightAmount,
 				ActualAmount:   actualAmountTotal,
 				PaymentMethod:  p.PaymentMethod,
 				Remark:         p.Remark,
@@ -276,11 +310,12 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 				return err
 			}
 
-			id, _ = id_generator.GetGenerator().GenerateUniqueID()
+			id = id_generator.GetGenerator().GenerateUniqueID()
 			courier := &databases.OrderLogistics{
 				PrimaryID:      datatypes.PrimaryID{},
 				LogisticsID:    id,
 				OrderID:        order.OrderID,
+				ShippingID:     p.ShippingID,
 				Recipients:     p.Recipients,
 				ShippingAddr:   p.ShippingAddr,
 				Mobile:         p.Mobile,
@@ -296,21 +331,20 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 		func(db sqlx.DBExecutor) error {
 			for _, item := range goodsList {
 				orderGoods := databases.OrderGoods{
-					OrderID:        order.OrderID,
-					GoodsID:        item.GoodsID,
-					Name:           item.Name,
-					Comment:        item.Comment,
-					DispatchAddr:   item.DispatchAddr,
-					Sales:          item.Sales,
-					MainPicture:    item.MainPicture,
-					Pictures:       item.Pictures,
-					Specifications: item.Specifications,
-					LogisticPolicy: item.LogisticPolicy,
-					Price:          item.Price,
-					Inventory:      item.Inventory,
-					Detail:         item.Detail,
-					Amount:         item.Amount,
-					IsBooking:      item.IsBooking,
+					OrderID:           order.OrderID,
+					GoodsID:           item.GoodsID,
+					Name:              item.Name,
+					Comment:           item.Comment,
+					FreightTemplateID: item.FreightTemplateID,
+					Sales:             item.Sales,
+					MainPicture:       item.MainPicture,
+					Pictures:          item.Pictures,
+					Specifications:    item.Specifications,
+					Price:             item.Price,
+					Inventory:         item.Inventory,
+					Detail:            item.Detail,
+					Amount:            item.Amount,
+					IsBooking:         item.IsBooking,
 				}
 				err := orderGoods.Create(db)
 				if err != nil {
@@ -503,18 +537,20 @@ func (c Controller) updateOrderLogistics(
 	db sqlx.DBExecutor,
 	order *databases.Order,
 	logistics *databases.OrderLogistics,
-	recipients, address, mobile string,
+	shippingID uint64, recipients, address, mobile string,
 ) (err error) {
-	if logistics.Recipients == recipients && logistics.ShippingAddr == address && logistics.Mobile == mobile {
+	if logistics.ShippingID == shippingID && logistics.Recipients == recipients && logistics.ShippingAddr == address && logistics.Mobile == mobile {
 		return
 	}
 	if order.Status >= enums.ORDER_STATUS__DISPATCH {
 		return general_errors.NotAllowedChangeLogistics
 	}
+	logistics.ShippingID = shippingID
 	logistics.Recipients = recipients
 	logistics.ShippingAddr = address
 	logistics.Mobile = mobile
 	f := builder.FieldValues{
+		"ShippingID":   logistics.ShippingID,
 		"Recipients":   logistics.Recipients,
 		"ShippingAddr": logistics.ShippingAddr,
 		"Mobile":       logistics.Mobile,
@@ -734,21 +770,20 @@ func (c Controller) updateOrderGoods(
 
 		// 创建物料
 		orderGoods := &databases.OrderGoods{
-			OrderID:        order.OrderID,
-			GoodsID:        model.GoodsID,
-			Name:           model.Name,
-			Comment:        model.Comment,
-			DispatchAddr:   model.DispatchAddr,
-			Sales:          model.Sales,
-			MainPicture:    model.MainPicture,
-			Pictures:       model.Pictures,
-			Specifications: model.Specifications,
-			LogisticPolicy: model.LogisticPolicy,
-			Price:          model.Price,
-			Inventory:      model.Inventory,
-			Detail:         model.Detail,
-			Amount:         g.Amount,
-			IsBooking:      isBooking,
+			OrderID:           order.OrderID,
+			GoodsID:           model.GoodsID,
+			Name:              model.Name,
+			Comment:           model.Comment,
+			FreightTemplateID: model.FreightTemplateID,
+			Sales:             model.Sales,
+			MainPicture:       model.MainPicture,
+			Pictures:          model.Pictures,
+			Specifications:    model.Specifications,
+			Price:             model.Price,
+			Inventory:         model.Inventory,
+			Detail:            model.Detail,
+			Amount:            g.Amount,
+			IsBooking:         isBooking,
 		}
 		err = orderGoods.Create(db)
 		if err != nil {
@@ -827,11 +862,12 @@ func (c Controller) UpdateOrder(
 		}
 	}
 
-	if params.Recipients != "" || params.ShippingAddr != "" || params.Mobile != "" {
+	if params.ShippingID != 0 || params.Recipients != "" || params.ShippingAddr != "" || params.Mobile != "" {
 		if err = c.updateOrderLogistics(
 			db,
 			order,
 			logistics,
+			params.ShippingID,
 			params.Recipients,
 			params.ShippingAddr,
 			params.Mobile,

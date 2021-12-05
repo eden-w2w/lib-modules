@@ -130,7 +130,7 @@ func (c Controller) RefreshToken(id uint64) (*databases.Administrators, error) {
 }
 
 func (c Controller) CreateAdmin(params LoginParams) (*databases.Administrators, error) {
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.Administrators{
 		AdministratorsID: id,
 		UserName:         params.UserName,

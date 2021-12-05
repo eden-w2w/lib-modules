@@ -39,22 +39,21 @@ func (OrderGoods) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes
 
 func (OrderGoods) Comments() map[string]string {
 	return map[string]string{
-		"Amount":         "-------------------------------------------",
-		"BookingFlowID":  "预售单号",
-		"Comment":        "描述",
-		"Detail":         "详细介绍",
-		"DispatchAddr":   "发货地",
-		"GoodsID":        "商品ID",
-		"Inventory":      "库存",
-		"IsBooking":      "是否预订",
-		"LogisticPolicy": "物流政策",
-		"MainPicture":    "标题图片",
-		"Name":           "---------------- 商品快照 ------------------",
-		"OrderID":        "订单ID",
-		"Pictures":       "所有展示图片",
-		"Price":          "价格",
-		"Sales":          "销量",
-		"Specifications": "规格",
+		"Amount":            "-------------------------------------------",
+		"BookingFlowID":     "预售单号",
+		"Comment":           "描述",
+		"Detail":            "详细介绍",
+		"FreightTemplateID": "运费模板",
+		"GoodsID":           "商品ID",
+		"Inventory":         "库存",
+		"IsBooking":         "是否预订",
+		"MainPicture":       "标题图片",
+		"Name":              "---------------- 商品快照 ------------------",
+		"OrderID":           "订单ID",
+		"Pictures":          "所有展示图片",
+		"Price":             "价格",
+		"Sales":             "销量",
+		"Specifications":    "规格",
 	}
 }
 
@@ -94,8 +93,8 @@ func (OrderGoods) ColDescriptions() map[string][]string {
 		"Detail": []string{
 			"详细介绍",
 		},
-		"DispatchAddr": []string{
-			"发货地",
+		"FreightTemplateID": []string{
+			"运费模板",
 		},
 		"GoodsID": []string{
 			"商品ID",
@@ -105,9 +104,6 @@ func (OrderGoods) ColDescriptions() map[string][]string {
 		},
 		"IsBooking": []string{
 			"是否预订",
-		},
-		"LogisticPolicy": []string{
-			"物流政策",
 		},
 		"MainPicture": []string{
 			"标题图片",
@@ -174,12 +170,12 @@ func (m *OrderGoods) FieldComment() *github_com_eden_framework_sqlx_builder.Colu
 	return OrderGoodsTable.F(m.FieldKeyComment())
 }
 
-func (OrderGoods) FieldKeyDispatchAddr() string {
-	return "DispatchAddr"
+func (OrderGoods) FieldKeyFreightTemplateID() string {
+	return "FreightTemplateID"
 }
 
-func (m *OrderGoods) FieldDispatchAddr() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderGoodsTable.F(m.FieldKeyDispatchAddr())
+func (m *OrderGoods) FieldFreightTemplateID() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderGoodsTable.F(m.FieldKeyFreightTemplateID())
 }
 
 func (OrderGoods) FieldKeySales() string {
@@ -212,14 +208,6 @@ func (OrderGoods) FieldKeySpecifications() string {
 
 func (m *OrderGoods) FieldSpecifications() *github_com_eden_framework_sqlx_builder.Column {
 	return OrderGoodsTable.F(m.FieldKeySpecifications())
-}
-
-func (OrderGoods) FieldKeyLogisticPolicy() string {
-	return "LogisticPolicy"
-}
-
-func (m *OrderGoods) FieldLogisticPolicy() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderGoodsTable.F(m.FieldKeyLogisticPolicy())
 }
 
 func (OrderGoods) FieldKeyPrice() string {

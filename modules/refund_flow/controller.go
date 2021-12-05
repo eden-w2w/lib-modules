@@ -40,7 +40,7 @@ func (c Controller) CreateRefundFlow(params CreateRefundFlowRequest, db sqlx.DBE
 		db = c.db
 	}
 
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.RefundFlow{
 		FlowID:              id,
 		PaymentFlowID:       params.PaymentFlowID,

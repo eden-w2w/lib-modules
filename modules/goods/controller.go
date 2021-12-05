@@ -48,7 +48,7 @@ func (c Controller) GetGoods(p GetGoodsParams) ([]databases.Goods, error) {
 	}
 
 	m := databases.Goods{}
-	goods, err := m.List(c.db, p.Conditions(c.db), p.Additions()...)
+	goods, err := m.List(c.db, p.Conditions(), p.Additions()...)
 	if err != nil {
 		logrus.Errorf("[GetGoods] m.List err: %v, params: %+v", err, p)
 		return nil, general_errors.InternalError
@@ -174,8 +174,11 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams, db sql
 	if params.Comment != "" {
 		model.Comment = params.Comment
 	}
-	if params.DispatchAddr != "" {
-		model.DispatchAddr = params.DispatchAddr
+	if params.FreightTemplateID != 0 {
+		model.FreightTemplateID = params.FreightTemplateID
+	}
+	if params.UnitNetWeight != nil {
+		model.UnitNetWeight = *params.UnitNetWeight
 	}
 	if params.Sales != 0 {
 		model.Sales = params.Sales
@@ -188,9 +191,6 @@ func (c Controller) UpdateGoods(goodsID uint64, params UpdateGoodsParams, db sql
 	}
 	if len(params.Specifications) > 0 {
 		model.Specifications = params.Specifications
-	}
-	if params.LogisticPolicy != "" {
-		model.LogisticPolicy = params.LogisticPolicy
 	}
 	if params.Price != 0 {
 		model.Price = params.Price
@@ -219,17 +219,17 @@ func (c Controller) CreateGoods(params CreateGoodsParams) (*databases.Goods, err
 	}
 
 	model := &databases.Goods{
-		Name:           params.Name,
-		Comment:        params.Comment,
-		DispatchAddr:   params.DispatchAddr,
-		Sales:          params.Sales,
-		MainPicture:    params.MainPicture,
-		Pictures:       params.Pictures,
-		Specifications: params.Specifications,
-		LogisticPolicy: params.LogisticPolicy,
-		Price:          params.Price,
-		Detail:         params.Detail,
-		IsAllowBooking: params.IsAllowBooking,
+		Name:              params.Name,
+		Comment:           params.Comment,
+		FreightTemplateID: params.FreightTemplateID,
+		UnitNetWeight:     params.UnitNetWeight,
+		Sales:             params.Sales,
+		MainPicture:       params.MainPicture,
+		Pictures:          params.Pictures,
+		Specifications:    params.Specifications,
+		Price:             params.Price,
+		Detail:            params.Detail,
+		IsAllowBooking:    params.IsAllowBooking,
 	}
 	if params.Inventory != nil {
 		model.Inventory = *params.Inventory

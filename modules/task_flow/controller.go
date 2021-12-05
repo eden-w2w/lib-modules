@@ -39,7 +39,7 @@ func (c Controller) CreateTaskFlow(params CreateTaskFlowParams, db sqlx.DBExecut
 		db = c.db
 	}
 
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.TaskFlow{
 		FlowID:    id,
 		Name:      params.Name,

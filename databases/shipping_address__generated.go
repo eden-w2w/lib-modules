@@ -39,13 +39,20 @@ func (ShippingAddress) UniqueIndexes() github_com_eden_framework_sqlx_builder.In
 
 func (ShippingAddress) Comments() map[string]string {
 	return map[string]string{
-		"Address":    "详细地址",
-		"Default":    "是否默认",
-		"District":   "省市区街道",
-		"Mobile":     "联系电话",
-		"Recipients": "收件人",
-		"ShippingID": "业务ID",
-		"UserID":     "用户ID",
+		"Address":      "详细地址",
+		"City":         "市名称",
+		"CityCode":     "市编码",
+		"Default":      "是否默认",
+		"District":     "区县名称",
+		"DistrictCode": "区县编码",
+		"Mobile":       "联系电话",
+		"Province":     "省名称",
+		"ProvinceCode": "省编码",
+		"Recipients":   "收件人",
+		"ShippingID":   "业务ID",
+		"Street":       "街道名称",
+		"StreetCode":   "街道编码",
+		"UserID":       "用户ID",
 	}
 }
 
@@ -75,20 +82,41 @@ func (ShippingAddress) ColDescriptions() map[string][]string {
 		"Address": []string{
 			"详细地址",
 		},
+		"City": []string{
+			"市名称",
+		},
+		"CityCode": []string{
+			"市编码",
+		},
 		"Default": []string{
 			"是否默认",
 		},
 		"District": []string{
-			"省市区街道",
+			"区县名称",
+		},
+		"DistrictCode": []string{
+			"区县编码",
 		},
 		"Mobile": []string{
 			"联系电话",
+		},
+		"Province": []string{
+			"省名称",
+		},
+		"ProvinceCode": []string{
+			"省编码",
 		},
 		"Recipients": []string{
 			"收件人",
 		},
 		"ShippingID": []string{
 			"业务ID",
+		},
+		"Street": []string{
+			"街道名称",
+		},
+		"StreetCode": []string{
+			"街道编码",
 		},
 		"UserID": []string{
 			"用户ID",
@@ -128,12 +156,68 @@ func (m *ShippingAddress) FieldRecipients() *github_com_eden_framework_sqlx_buil
 	return ShippingAddressTable.F(m.FieldKeyRecipients())
 }
 
+func (ShippingAddress) FieldKeyProvince() string {
+	return "Province"
+}
+
+func (m *ShippingAddress) FieldProvince() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyProvince())
+}
+
+func (ShippingAddress) FieldKeyProvinceCode() string {
+	return "ProvinceCode"
+}
+
+func (m *ShippingAddress) FieldProvinceCode() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyProvinceCode())
+}
+
+func (ShippingAddress) FieldKeyCity() string {
+	return "City"
+}
+
+func (m *ShippingAddress) FieldCity() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyCity())
+}
+
+func (ShippingAddress) FieldKeyCityCode() string {
+	return "CityCode"
+}
+
+func (m *ShippingAddress) FieldCityCode() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyCityCode())
+}
+
 func (ShippingAddress) FieldKeyDistrict() string {
 	return "District"
 }
 
 func (m *ShippingAddress) FieldDistrict() *github_com_eden_framework_sqlx_builder.Column {
 	return ShippingAddressTable.F(m.FieldKeyDistrict())
+}
+
+func (ShippingAddress) FieldKeyDistrictCode() string {
+	return "DistrictCode"
+}
+
+func (m *ShippingAddress) FieldDistrictCode() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyDistrictCode())
+}
+
+func (ShippingAddress) FieldKeyStreet() string {
+	return "Street"
+}
+
+func (m *ShippingAddress) FieldStreet() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyStreet())
+}
+
+func (ShippingAddress) FieldKeyStreetCode() string {
+	return "StreetCode"
+}
+
+func (m *ShippingAddress) FieldStreetCode() *github_com_eden_framework_sqlx_builder.Column {
+	return ShippingAddressTable.F(m.FieldKeyStreetCode())
 }
 
 func (ShippingAddress) FieldKeyAddress() string {

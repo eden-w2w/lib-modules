@@ -16,6 +16,8 @@ type OrderLogistics struct {
 	LogisticsID uint64 `json:"logisticsID,string" db:"f_logistics_id"`
 	// 订单号
 	OrderID uint64 `json:"orderID,string" db:"f_order_id"`
+	// 收件地址ID
+	ShippingID uint64 `json:"shippingID,string" db:"f_shipping_id"`
 	// 收件人
 	Recipients string `json:"recipients" db:"f_recipients"`
 	// 收货地址

@@ -9,265 +9,221 @@ import (
 	github_com_eden_framework_sqlx_datatypes "github.com/eden-framework/sqlx/datatypes"
 )
 
-func (Goods) PrimaryKey() []string {
+func (FreightTemplateRules) PrimaryKey() []string {
 	return []string{
 		"ID",
 	}
 }
 
-func (Goods) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
+func (FreightTemplateRules) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
 	return github_com_eden_framework_sqlx_builder.Indexes{
-		"I_freight": []string{
-			"FreightTemplateID",
+		"I_template_id": []string{
+			"TemplateID",
+			"IsFreeFreight",
 		},
 	}
 }
 
-func (Goods) UniqueIndexUGoodsID() string {
-	return "U_goods_id"
+func (FreightTemplateRules) UniqueIndexURuleID() string {
+	return "U_rule_id"
 }
 
-func (Goods) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
+func (FreightTemplateRules) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
 	return github_com_eden_framework_sqlx_builder.Indexes{
-		"U_goods_id": []string{
-			"GoodsID",
+		"U_rule_id": []string{
+			"RuleID",
 			"DeletedAt",
 		},
 	}
 }
 
-func (Goods) Comments() map[string]string {
+func (FreightTemplateRules) Comments() map[string]string {
 	return map[string]string{
-		"Comment":           "描述",
-		"Detail":            "详细介绍",
-		"FreightTemplateID": "运费模板",
-		"GoodsID":           "业务ID",
-		"Inventory":         "库存",
-		"IsAllowBooking":    "是否开启无货后预订模式",
-		"MainPicture":       "标题图片",
-		"Name":              "名称",
-		"Pictures":          "所有展示图片",
-		"Price":             "价格",
-		"Sales":             "销量",
-		"Specifications":    "规格",
-		"UnitNetWeight":     "单品净重，单位克（用于邮费计算）",
+		"Area":          "包含区域",
+		"ContinuePrice": "续重/续件价格",
+		"ContinueRange": "续重（克）/续件（个）范围",
+		"Description":   "展示话术",
+		"FirstPrice":    "首重/首件价格",
+		"FirstRange":    "-------------------------------------------------",
+		"IsFreeFreight": "是否包邮",
+		"RuleID":        "业务ID",
+		"TemplateID":    "模板ID",
 	}
 }
 
-var GoodsTable *github_com_eden_framework_sqlx_builder.Table
+var FreightTemplateRulesTable *github_com_eden_framework_sqlx_builder.Table
 
 func init() {
-	GoodsTable = Config.DB.Register(&Goods{})
+	FreightTemplateRulesTable = Config.DB.Register(&FreightTemplateRules{})
 }
 
-type GoodsIterator struct {
+type FreightTemplateRulesIterator struct {
 }
 
-func (GoodsIterator) New() interface{} {
-	return &Goods{}
+func (FreightTemplateRulesIterator) New() interface{} {
+	return &FreightTemplateRules{}
 }
 
-func (GoodsIterator) Resolve(v interface{}) *Goods {
-	return v.(*Goods)
+func (FreightTemplateRulesIterator) Resolve(v interface{}) *FreightTemplateRules {
+	return v.(*FreightTemplateRules)
 }
 
-func (Goods) TableName() string {
-	return "t_goods"
+func (FreightTemplateRules) TableName() string {
+	return "t_freight_template_rules"
 }
 
-func (Goods) ColDescriptions() map[string][]string {
+func (FreightTemplateRules) ColDescriptions() map[string][]string {
 	return map[string][]string{
-		"Comment": []string{
-			"描述",
+		"Area": []string{
+			"包含区域",
 		},
-		"Detail": []string{
-			"详细介绍",
+		"ContinuePrice": []string{
+			"续重/续件价格",
 		},
-		"FreightTemplateID": []string{
-			"运费模板",
+		"ContinueRange": []string{
+			"续重（克）/续件（个）范围",
 		},
-		"GoodsID": []string{
+		"Description": []string{
+			"展示话术",
+		},
+		"FirstPrice": []string{
+			"首重/首件价格",
+		},
+		"FirstRange": []string{
+			"-------------------------------------------------",
+			"运费设置",
+			"首重（克）/首件（个）范围",
+		},
+		"IsFreeFreight": []string{
+			"是否包邮",
+		},
+		"RuleID": []string{
 			"业务ID",
 		},
-		"Inventory": []string{
-			"库存",
-		},
-		"IsAllowBooking": []string{
-			"是否开启无货后预订模式",
-		},
-		"MainPicture": []string{
-			"标题图片",
-		},
-		"Name": []string{
-			"名称",
-		},
-		"Pictures": []string{
-			"所有展示图片",
-		},
-		"Price": []string{
-			"价格",
-		},
-		"Sales": []string{
-			"销量",
-		},
-		"Specifications": []string{
-			"规格",
-		},
-		"UnitNetWeight": []string{
-			"单品净重，单位克（用于邮费计算）",
+		"TemplateID": []string{
+			"模板ID",
 		},
 	}
 }
 
-func (Goods) FieldKeyID() string {
+func (FreightTemplateRules) FieldKeyID() string {
 	return "ID"
 }
 
-func (m *Goods) FieldID() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyID())
+func (m *FreightTemplateRules) FieldID() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyID())
 }
 
-func (Goods) FieldKeyGoodsID() string {
-	return "GoodsID"
+func (FreightTemplateRules) FieldKeyRuleID() string {
+	return "RuleID"
 }
 
-func (m *Goods) FieldGoodsID() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyGoodsID())
+func (m *FreightTemplateRules) FieldRuleID() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyRuleID())
 }
 
-func (Goods) FieldKeyName() string {
-	return "Name"
+func (FreightTemplateRules) FieldKeyTemplateID() string {
+	return "TemplateID"
 }
 
-func (m *Goods) FieldName() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyName())
+func (m *FreightTemplateRules) FieldTemplateID() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyTemplateID())
 }
 
-func (Goods) FieldKeyComment() string {
-	return "Comment"
+func (FreightTemplateRules) FieldKeyArea() string {
+	return "Area"
 }
 
-func (m *Goods) FieldComment() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyComment())
+func (m *FreightTemplateRules) FieldArea() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyArea())
 }
 
-func (Goods) FieldKeyFreightTemplateID() string {
-	return "FreightTemplateID"
+func (FreightTemplateRules) FieldKeyIsFreeFreight() string {
+	return "IsFreeFreight"
 }
 
-func (m *Goods) FieldFreightTemplateID() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyFreightTemplateID())
+func (m *FreightTemplateRules) FieldIsFreeFreight() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyIsFreeFreight())
 }
 
-func (Goods) FieldKeyUnitNetWeight() string {
-	return "UnitNetWeight"
+func (FreightTemplateRules) FieldKeyDescription() string {
+	return "Description"
 }
 
-func (m *Goods) FieldUnitNetWeight() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyUnitNetWeight())
+func (m *FreightTemplateRules) FieldDescription() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyDescription())
 }
 
-func (Goods) FieldKeySales() string {
-	return "Sales"
+func (FreightTemplateRules) FieldKeyFirstRange() string {
+	return "FirstRange"
 }
 
-func (m *Goods) FieldSales() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeySales())
+func (m *FreightTemplateRules) FieldFirstRange() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyFirstRange())
 }
 
-func (Goods) FieldKeyMainPicture() string {
-	return "MainPicture"
+func (FreightTemplateRules) FieldKeyFirstPrice() string {
+	return "FirstPrice"
 }
 
-func (m *Goods) FieldMainPicture() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyMainPicture())
+func (m *FreightTemplateRules) FieldFirstPrice() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyFirstPrice())
 }
 
-func (Goods) FieldKeyPictures() string {
-	return "Pictures"
+func (FreightTemplateRules) FieldKeyContinueRange() string {
+	return "ContinueRange"
 }
 
-func (m *Goods) FieldPictures() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyPictures())
+func (m *FreightTemplateRules) FieldContinueRange() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyContinueRange())
 }
 
-func (Goods) FieldKeySpecifications() string {
-	return "Specifications"
+func (FreightTemplateRules) FieldKeyContinuePrice() string {
+	return "ContinuePrice"
 }
 
-func (m *Goods) FieldSpecifications() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeySpecifications())
+func (m *FreightTemplateRules) FieldContinuePrice() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyContinuePrice())
 }
 
-func (Goods) FieldKeyPrice() string {
-	return "Price"
-}
-
-func (m *Goods) FieldPrice() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyPrice())
-}
-
-func (Goods) FieldKeyInventory() string {
-	return "Inventory"
-}
-
-func (m *Goods) FieldInventory() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyInventory())
-}
-
-func (Goods) FieldKeyDetail() string {
-	return "Detail"
-}
-
-func (m *Goods) FieldDetail() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyDetail())
-}
-
-func (Goods) FieldKeyIsAllowBooking() string {
-	return "IsAllowBooking"
-}
-
-func (m *Goods) FieldIsAllowBooking() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyIsAllowBooking())
-}
-
-func (Goods) FieldKeyCreatedAt() string {
+func (FreightTemplateRules) FieldKeyCreatedAt() string {
 	return "CreatedAt"
 }
 
-func (m *Goods) FieldCreatedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyCreatedAt())
+func (m *FreightTemplateRules) FieldCreatedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyCreatedAt())
 }
 
-func (Goods) FieldKeyUpdatedAt() string {
+func (FreightTemplateRules) FieldKeyUpdatedAt() string {
 	return "UpdatedAt"
 }
 
-func (m *Goods) FieldUpdatedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyUpdatedAt())
+func (m *FreightTemplateRules) FieldUpdatedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyUpdatedAt())
 }
 
-func (Goods) FieldKeyDeletedAt() string {
+func (FreightTemplateRules) FieldKeyDeletedAt() string {
 	return "DeletedAt"
 }
 
-func (m *Goods) FieldDeletedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return GoodsTable.F(m.FieldKeyDeletedAt())
+func (m *FreightTemplateRules) FieldDeletedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateRulesTable.F(m.FieldKeyDeletedAt())
 }
 
-func (Goods) ColRelations() map[string][]string {
+func (FreightTemplateRules) ColRelations() map[string][]string {
 	return map[string][]string{}
 }
 
-func (m *Goods) IndexFieldNames() []string {
+func (m *FreightTemplateRules) IndexFieldNames() []string {
 	return []string{
-		"FreightTemplateID",
-		"GoodsID",
 		"ID",
+		"IsFreeFreight",
+		"RuleID",
+		"TemplateID",
 	}
 }
 
-func (m *Goods) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) github_com_eden_framework_sqlx_builder.SqlCondition {
+func (m *FreightTemplateRules) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) github_com_eden_framework_sqlx_builder.SqlCondition {
 	table := db.T(m)
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m)
 
@@ -294,7 +250,7 @@ func (m *Goods) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) 
 	return condition
 }
 
-func (m *Goods) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	if m.CreatedAt.IsZero() {
 		m.CreatedAt = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -309,7 +265,7 @@ func (m *Goods) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 }
 
-func (m *Goods) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_sqlx.DBExecutor, updateFields []string) error {
+func (m *FreightTemplateRules) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_sqlx.DBExecutor, updateFields []string) error {
 
 	if len(updateFields) == 0 {
 		panic(fmt.Errorf("must have update fields"))
@@ -379,21 +335,21 @@ func (m *Goods) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_s
 
 }
 
-func (m *Goods) DeleteByStruct(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) DeleteByStruct(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	_, err := db.ExecExpr(
 		github_com_eden_framework_sqlx_builder.Delete().
 			From(
 				db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(m.ConditionByStruct(db)),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.DeleteByStruct"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.DeleteByStruct"),
 			),
 	)
 
 	return err
 }
 
-func (m *Goods) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -405,7 +361,7 @@ func (m *Goods) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.FetchByID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.FetchByID"),
 			),
 		m,
 	)
@@ -413,7 +369,7 @@ func (m *Goods) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 	return err
 }
 
-func (m *Goods) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
+func (m *FreightTemplateRules) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
 
 	if _, ok := fieldValues["UpdatedAt"]; !ok {
 		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -428,7 +384,7 @@ func (m *Goods) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, 
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.UpdateByIDWithMap"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.UpdateByIDWithMap"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -446,14 +402,14 @@ func (m *Goods) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, 
 
 }
 
-func (m *Goods) UpdateByIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
+func (m *FreightTemplateRules) UpdateByIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
 
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
 	return m.UpdateByIDWithMap(db, fieldValues)
 
 }
 
-func (m *Goods) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -466,7 +422,7 @@ func (m *Goods) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor)
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
 				github_com_eden_framework_sqlx_builder.ForUpdate(),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.FetchByIDForUpdate"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.FetchByIDForUpdate"),
 			),
 		m,
 	)
@@ -474,7 +430,7 @@ func (m *Goods) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor)
 	return err
 }
 
-func (m *Goods) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -485,13 +441,13 @@ func (m *Goods) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.DeleteByID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.DeleteByID"),
 			))
 
 	return err
 }
 
-func (m *Goods) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -511,7 +467,7 @@ func (m *Goods) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) err
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.SoftDeleteByID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.SoftDeleteByID"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -520,7 +476,7 @@ func (m *Goods) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) err
 
 }
 
-func (m *Goods) FetchByGoodsID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) FetchByRuleID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -529,10 +485,10 @@ func (m *Goods) FetchByGoodsID(db github_com_eden_framework_sqlx.DBExecutor) err
 			From(
 				db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("GoodsID").Eq(m.GoodsID),
+					table.F("RuleID").Eq(m.RuleID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.FetchByGoodsID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.FetchByRuleID"),
 			),
 		m,
 	)
@@ -540,7 +496,7 @@ func (m *Goods) FetchByGoodsID(db github_com_eden_framework_sqlx.DBExecutor) err
 	return err
 }
 
-func (m *Goods) UpdateByGoodsIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
+func (m *FreightTemplateRules) UpdateByRuleIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
 
 	if _, ok := fieldValues["UpdatedAt"]; !ok {
 		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -552,10 +508,10 @@ func (m *Goods) UpdateByGoodsIDWithMap(db github_com_eden_framework_sqlx.DBExecu
 		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
 			Where(
 				github_com_eden_framework_sqlx_builder.And(
-					table.F("GoodsID").Eq(m.GoodsID),
+					table.F("RuleID").Eq(m.RuleID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.UpdateByGoodsIDWithMap"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.UpdateByRuleIDWithMap"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -566,21 +522,21 @@ func (m *Goods) UpdateByGoodsIDWithMap(db github_com_eden_framework_sqlx.DBExecu
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		return m.FetchByGoodsID(db)
+		return m.FetchByRuleID(db)
 	}
 
 	return nil
 
 }
 
-func (m *Goods) UpdateByGoodsIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
+func (m *FreightTemplateRules) UpdateByRuleIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
 
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
-	return m.UpdateByGoodsIDWithMap(db, fieldValues)
+	return m.UpdateByRuleIDWithMap(db, fieldValues)
 
 }
 
-func (m *Goods) FetchByGoodsIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) FetchByRuleIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -589,11 +545,11 @@ func (m *Goods) FetchByGoodsIDForUpdate(db github_com_eden_framework_sqlx.DBExec
 			From(
 				db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("GoodsID").Eq(m.GoodsID),
+					table.F("RuleID").Eq(m.RuleID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
 				github_com_eden_framework_sqlx_builder.ForUpdate(),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.FetchByGoodsIDForUpdate"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.FetchByRuleIDForUpdate"),
 			),
 		m,
 	)
@@ -601,7 +557,7 @@ func (m *Goods) FetchByGoodsIDForUpdate(db github_com_eden_framework_sqlx.DBExec
 	return err
 }
 
-func (m *Goods) DeleteByGoodsID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) DeleteByRuleID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -609,16 +565,16 @@ func (m *Goods) DeleteByGoodsID(db github_com_eden_framework_sqlx.DBExecutor) er
 		github_com_eden_framework_sqlx_builder.Delete().
 			From(db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("GoodsID").Eq(m.GoodsID),
+					table.F("RuleID").Eq(m.RuleID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.DeleteByGoodsID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.DeleteByRuleID"),
 			))
 
 	return err
 }
 
-func (m *Goods) SoftDeleteByGoodsID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplateRules) SoftDeleteByRuleID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -635,10 +591,10 @@ func (m *Goods) SoftDeleteByGoodsID(db github_com_eden_framework_sqlx.DBExecutor
 		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
 			Where(
 				github_com_eden_framework_sqlx_builder.And(
-					table.F("GoodsID").Eq(m.GoodsID),
+					table.F("RuleID").Eq(m.RuleID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Goods.SoftDeleteByGoodsID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.SoftDeleteByRuleID"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -647,9 +603,9 @@ func (m *Goods) SoftDeleteByGoodsID(db github_com_eden_framework_sqlx.DBExecutor
 
 }
 
-func (m *Goods) List(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) ([]Goods, error) {
+func (m *FreightTemplateRules) List(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) ([]FreightTemplateRules, error) {
 
-	list := make([]Goods, 0)
+	list := make([]FreightTemplateRules, 0)
 
 	table := db.T(m)
 	_ = table
@@ -658,7 +614,7 @@ func (m *Goods) List(db github_com_eden_framework_sqlx.DBExecutor, condition git
 
 	finalAdditions := []github_com_eden_framework_sqlx_builder.Addition{
 		github_com_eden_framework_sqlx_builder.Where(condition),
-		github_com_eden_framework_sqlx_builder.Comment("Goods.List"),
+		github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.List"),
 	}
 
 	if len(additions) > 0 {
@@ -675,7 +631,7 @@ func (m *Goods) List(db github_com_eden_framework_sqlx.DBExecutor, condition git
 
 }
 
-func (m *Goods) Count(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) (int, error) {
+func (m *FreightTemplateRules) Count(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) (int, error) {
 
 	count := -1
 
@@ -686,7 +642,7 @@ func (m *Goods) Count(db github_com_eden_framework_sqlx.DBExecutor, condition gi
 
 	finalAdditions := []github_com_eden_framework_sqlx_builder.Addition{
 		github_com_eden_framework_sqlx_builder.Where(condition),
-		github_com_eden_framework_sqlx_builder.Comment("Goods.Count"),
+		github_com_eden_framework_sqlx_builder.Comment("FreightTemplateRules.Count"),
 	}
 
 	if len(additions) > 0 {
@@ -705,35 +661,7 @@ func (m *Goods) Count(db github_com_eden_framework_sqlx.DBExecutor, condition gi
 
 }
 
-func (m *Goods) BatchFetchByFreightTemplateIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]Goods, error) {
-
-	if len(values) == 0 {
-		return nil, nil
-	}
-
-	table := db.T(m)
-
-	condition := table.F("FreightTemplateID").In(values)
-
-	return m.List(db, condition)
-
-}
-
-func (m *Goods) BatchFetchByGoodsIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]Goods, error) {
-
-	if len(values) == 0 {
-		return nil, nil
-	}
-
-	table := db.T(m)
-
-	condition := table.F("GoodsID").In(values)
-
-	return m.List(db, condition)
-
-}
-
-func (m *Goods) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]Goods, error) {
+func (m *FreightTemplateRules) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]FreightTemplateRules, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -742,6 +670,48 @@ func (m *Goods) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor,
 	table := db.T(m)
 
 	condition := table.F("ID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *FreightTemplateRules) BatchFetchByIsFreeFreightList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_framework_sqlx_datatypes.Bool) ([]FreightTemplateRules, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("IsFreeFreight").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *FreightTemplateRules) BatchFetchByRuleIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]FreightTemplateRules, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("RuleID").In(values)
+
+	return m.List(db, condition)
+
+}
+
+func (m *FreightTemplateRules) BatchFetchByTemplateIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]FreightTemplateRules, error) {
+
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	table := db.T(m)
+
+	condition := table.F("TemplateID").In(values)
 
 	return m.List(db, condition)
 

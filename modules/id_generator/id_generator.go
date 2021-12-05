@@ -208,11 +208,11 @@ func (g *GeneratorSnowFlake) initGenerator() (err error) {
 	return
 }
 
-func (g *GeneratorSnowFlake) GenerateUniqueID() (uint64, error) {
+func (g *GeneratorSnowFlake) GenerateUniqueID() uint64 {
 	if !g.isInit {
 		logrus.Panicf("[GeneratorSnowFlake] not Init")
 	}
 	node := g.getNextNode()
 	id := node.Generate()
-	return id.Uint64(), nil
+	return id.Uint64()
 }

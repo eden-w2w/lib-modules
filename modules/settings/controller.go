@@ -32,7 +32,7 @@ func (c *Controller) Init(db sqlx.DBExecutor) {
 	}
 
 	if len(models) == 0 {
-		id, _ := id_generator.GetGenerator().GenerateUniqueID()
+		id := id_generator.GetGenerator().GenerateUniqueID()
 		model.SettingsID = id
 		err = model.Create(db)
 		if err != nil {

@@ -1,20 +1,27 @@
 package goods
 
 import (
-	"github.com/eden-framework/sqlx"
 	"github.com/eden-framework/sqlx/builder"
 	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/constants/types"
+	"github.com/eden-w2w/lib-modules/databases"
 
 	"github.com/eden-w2w/lib-modules/modules"
 )
 
 type GetGoodsParams struct {
+	// 运费模板
+	FreightTemplateID uint64 `in:"query" name:"freightTemplateID,string" default:""`
 	modules.Pagination
 }
 
-func (p GetGoodsParams) Conditions(db sqlx.DBExecutor) builder.SqlCondition {
-	return nil
+func (p GetGoodsParams) Conditions() builder.SqlCondition {
+	var condition builder.SqlCondition
+	var model = &databases.Goods{}
+	if p.FreightTemplateID != 0 {
+		condition = builder.And(condition, model.FieldFreightTemplateID().Eq(p.FreightTemplateID))
+	}
+	return condition
 }
 
 func (p GetGoodsParams) Additions() []builder.Addition {
@@ -36,8 +43,10 @@ type CreateGoodsParams struct {
 	Name string `json:"name" in:"body"`
 	// 描述
 	Comment string `json:"comment" default:"" in:"body"`
-	// 发货地
-	DispatchAddr string `json:"dispatchAddr" in:"body"`
+	// 运费模板
+	FreightTemplateID uint64 `json:"freightTemplateID,string"`
+	// 单品净重，单位克（用于邮费计算）
+	UnitNetWeight uint32 `json:"unitNetWeight" default:""`
 	// 销量
 	Sales uint32 `json:"sales" default:"" in:"body"`
 	// 标题图片
@@ -46,8 +55,6 @@ type CreateGoodsParams struct {
 	Pictures types.GoodsPictures `json:"pictures" in:"body"`
 	// 规格
 	Specifications []string `json:"specifications" in:"body"`
-	// 物流政策
-	LogisticPolicy string `json:"logisticPolicy" default:"" in:"body"`
 	// 价格
 	Price uint64 `json:"price" default:"" in:"body"`
 	// 库存
@@ -63,8 +70,10 @@ type UpdateGoodsParams struct {
 	Name string `json:"name" default:"" in:"body"`
 	// 描述
 	Comment string `json:"comment" default:"" in:"body"`
-	// 发货地
-	DispatchAddr string `json:"dispatchAddr" default:"" in:"body"`
+	// 运费模板
+	FreightTemplateID uint64 `json:"freightTemplateID,string" default:""`
+	// 单品净重，单位克（用于邮费计算）
+	UnitNetWeight *uint32 `json:"unitNetWeight" default:""`
 	// 销量
 	Sales uint32 `json:"sales" default:"" in:"body"`
 	// 标题图片
@@ -73,8 +82,6 @@ type UpdateGoodsParams struct {
 	Pictures types.GoodsPictures `json:"pictures" default:"" in:"body"`
 	// 规格
 	Specifications []string `json:"specifications" default:"" in:"body"`
-	// 物流政策
-	LogisticPolicy string `json:"logisticPolicy" default:"" in:"body"`
 	// 价格
 	Price uint64 `json:"price" default:"" in:"body"`
 	// 库存

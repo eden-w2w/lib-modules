@@ -141,8 +141,22 @@ type CreateShippingAddressParams struct {
 	UserID uint64 `json:"userID,string" default:""`
 	// 收件人
 	Recipients string `json:"recipients"`
-	// 省市区街道
+	// 省名称
+	Province string `json:"province"`
+	// 省编码
+	ProvinceCode string `json:"provinceCode"`
+	// 市名称
+	City string `json:"city"`
+	// 市编码
+	CityCode string `json:"cityCode"`
+	// 区县名称
 	District string `json:"district"`
+	// 区县编码
+	DistrictCode string `json:"districtCode"`
+	// 街道名称
+	Street string `json:"street"`
+	// 街道编码
+	StreetCode string `json:"streetCode"`
 	// 详细地址
 	Address string `json:"address"`
 	// 联系电话
@@ -154,8 +168,22 @@ type UpdateShippingAddressParams struct {
 	ShippingID uint64 `json:"shippingID,string" default:""`
 	// 收件人
 	Recipients string `json:"recipients" default:""`
-	// 省市区街道
+	// 省名称
+	Province string `json:"province" default:""`
+	// 省编码
+	ProvinceCode string `json:"provinceCode" default:""`
+	// 市名称
+	City string `json:"city" default:""`
+	// 市编码
+	CityCode string `json:"cityCode" default:""`
+	// 区县名称
 	District string `json:"district" default:""`
+	// 区县编码
+	DistrictCode string `json:"districtCode" default:""`
+	// 街道名称
+	Street string `json:"street" default:""`
+	// 街道编码
+	StreetCode string `json:"streetCode" default:""`
 	// 详细地址
 	Address string `json:"address" default:""`
 	// 联系电话

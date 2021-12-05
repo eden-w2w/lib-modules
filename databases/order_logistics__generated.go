@@ -53,6 +53,7 @@ func (OrderLogistics) Comments() map[string]string {
 		"OrderID":        "订单号",
 		"Recipients":     "收件人",
 		"ShippingAddr":   "收货地址",
+		"ShippingID":     "收件地址ID",
 	}
 }
 
@@ -100,6 +101,9 @@ func (OrderLogistics) ColDescriptions() map[string][]string {
 		"ShippingAddr": []string{
 			"收货地址",
 		},
+		"ShippingID": []string{
+			"收件地址ID",
+		},
 	}
 }
 
@@ -125,6 +129,14 @@ func (OrderLogistics) FieldKeyOrderID() string {
 
 func (m *OrderLogistics) FieldOrderID() *github_com_eden_framework_sqlx_builder.Column {
 	return OrderLogisticsTable.F(m.FieldKeyOrderID())
+}
+
+func (OrderLogistics) FieldKeyShippingID() string {
+	return "ShippingID"
+}
+
+func (m *OrderLogistics) FieldShippingID() *github_com_eden_framework_sqlx_builder.Column {
+	return OrderLogisticsTable.F(m.FieldKeyShippingID())
 }
 
 func (OrderLogistics) FieldKeyRecipients() string {

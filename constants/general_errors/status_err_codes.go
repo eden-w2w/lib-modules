@@ -7,7 +7,7 @@ import (
 )
 
 //go:generate eden generate error
-const ServiceStatusErrorCode = 0 // todo rename this
+const ServiceStatusErrorCode = 100
 
 const (
 	// 请求参数错误
@@ -20,6 +20,8 @@ const (
 	DiscountNotStart
 	// @errTalk 优惠活动已结束
 	DiscountEnd
+	// @errTalk 行政区划冲突
+	RegionsConflict
 )
 
 const (
@@ -39,6 +41,10 @@ const (
 	SettlementFlowNotFound
 	// @errTalk 管理员登录已失效
 	AdminTokenExpired
+	// @errTalk 运费模板未找到
+	FreightTemplateNotFound
+	// @errTalk 运费模板规则未找到
+	FreightRuleNotFound
 )
 
 const (

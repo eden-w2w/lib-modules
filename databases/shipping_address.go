@@ -20,8 +20,22 @@ type ShippingAddress struct {
 	UserID uint64 `json:"userID,string" db:"f_user_id"`
 	// 收件人
 	Recipients string `json:"recipients" db:"f_recipients"`
-	// 省市区街道
+	// 省名称
+	Province string `json:"province" db:"f_province"`
+	// 省编码
+	ProvinceCode string `json:"provinceCode" db:"f_province_code"`
+	// 市名称
+	City string `json:"city" db:"f_city"`
+	// 市编码
+	CityCode string `json:"cityCode" db:"f_city_code"`
+	// 区县名称
 	District string `json:"district" db:"f_district"`
+	// 区县编码
+	DistrictCode string `json:"districtCode" db:"f_district_code"`
+	// 街道名称
+	Street string `json:"street" db:"f_street"`
+	// 街道编码
+	StreetCode string `json:"streetCode" db:"f_street_code"`
 	// 详细地址
 	Address string `json:"address" db:"f_address"`
 	// 联系电话

@@ -69,7 +69,7 @@ func (c Controller) CreatePaymentFlow(params CreatePaymentFlowParams, db sqlx.DB
 	if db == nil {
 		db = c.db
 	}
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.PaymentFlow{
 		FlowID:        id,
 		UserID:        params.UserID,

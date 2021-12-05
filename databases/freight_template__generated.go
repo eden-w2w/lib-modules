@@ -10,260 +10,235 @@ import (
 	github_com_eden_w2_w_lib_modules_constants_enums "github.com/eden-w2w/lib-modules/constants/enums"
 )
 
-func (Order) PrimaryKey() []string {
+func (FreightTemplate) PrimaryKey() []string {
 	return []string{
 		"ID",
 	}
 }
 
-func (Order) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
+func (FreightTemplate) Indexes() github_com_eden_framework_sqlx_builder.Indexes {
 	return github_com_eden_framework_sqlx_builder.Indexes{
-		"I_expire": []string{
-			"Status",
-			"ExpiredAt",
-		},
-		"I_index": []string{
-			"UserID",
-			"Status",
+		"I_search": []string{
+			"Name",
+			"IsFreeFreight",
+			"Cal",
 		},
 	}
 }
 
-func (Order) UniqueIndexUOrderID() string {
-	return "U_order_id"
+func (FreightTemplate) UniqueIndexUTemplateID() string {
+	return "U_template_id"
 }
 
-func (Order) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
+func (FreightTemplate) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
 	return github_com_eden_framework_sqlx_builder.Indexes{
-		"U_order_id": []string{
-			"OrderID",
+		"U_template_id": []string{
+			"TemplateID",
 			"DeletedAt",
 		},
 	}
 }
 
-func (Order) Comments() map[string]string {
+func (FreightTemplate) Comments() map[string]string {
 	return map[string]string{
-		"ActualAmount":   "实际金额",
-		"DiscountAmount": "优惠金额",
-		"ExpiredAt":      "过期时间",
-		"FreightAmount":  "运费",
-		"NickName":       "用户昵称",
-		"OrderID":        "业务ID",
-		"PaymentMethod":  "支付方式",
-		"Remark":         "备注",
-		"Status":         "订单状态",
-		"TotalPrice":     "订单总额",
-		"UserID":         "用户ID",
-		"UserOpenID":     "微信OpenID",
+		"Cal":           "计费方式",
+		"ContinuePrice": "续重/续件价格",
+		"ContinueRange": "续重（克）/续件（个）范围",
+		"DispatchAddr":  "发货地",
+		"DispatchTime":  "发货时间",
+		"FirstPrice":    "首重/首件价格",
+		"FirstRange":    "-------------------------------------------------",
+		"IsFreeFreight": "是否全场包邮",
+		"Name":          "名称",
+		"TemplateID":    "业务ID",
 	}
 }
 
-var OrderTable *github_com_eden_framework_sqlx_builder.Table
+var FreightTemplateTable *github_com_eden_framework_sqlx_builder.Table
 
 func init() {
-	OrderTable = Config.DB.Register(&Order{})
+	FreightTemplateTable = Config.DB.Register(&FreightTemplate{})
 }
 
-type OrderIterator struct {
+type FreightTemplateIterator struct {
 }
 
-func (OrderIterator) New() interface{} {
-	return &Order{}
+func (FreightTemplateIterator) New() interface{} {
+	return &FreightTemplate{}
 }
 
-func (OrderIterator) Resolve(v interface{}) *Order {
-	return v.(*Order)
+func (FreightTemplateIterator) Resolve(v interface{}) *FreightTemplate {
+	return v.(*FreightTemplate)
 }
 
-func (Order) TableName() string {
-	return "t_order"
+func (FreightTemplate) TableName() string {
+	return "t_freight_template"
 }
 
-func (Order) ColDescriptions() map[string][]string {
+func (FreightTemplate) ColDescriptions() map[string][]string {
 	return map[string][]string{
-		"ActualAmount": []string{
-			"实际金额",
+		"Cal": []string{
+			"计费方式",
 		},
-		"DiscountAmount": []string{
-			"优惠金额",
+		"ContinuePrice": []string{
+			"续重/续件价格",
 		},
-		"ExpiredAt": []string{
-			"过期时间",
+		"ContinueRange": []string{
+			"续重（克）/续件（个）范围",
 		},
-		"FreightAmount": []string{
-			"运费",
+		"DispatchAddr": []string{
+			"发货地",
 		},
-		"NickName": []string{
-			"用户昵称",
+		"DispatchTime": []string{
+			"发货时间",
 		},
-		"OrderID": []string{
+		"FirstPrice": []string{
+			"首重/首件价格",
+		},
+		"FirstRange": []string{
+			"-------------------------------------------------",
+			"默认运费设置",
+			"首重（克）/首件（个）范围",
+		},
+		"IsFreeFreight": []string{
+			"是否全场包邮",
+		},
+		"Name": []string{
+			"名称",
+		},
+		"TemplateID": []string{
 			"业务ID",
-		},
-		"PaymentMethod": []string{
-			"支付方式",
-		},
-		"Remark": []string{
-			"备注",
-		},
-		"Status": []string{
-			"订单状态",
-		},
-		"TotalPrice": []string{
-			"订单总额",
-		},
-		"UserID": []string{
-			"用户ID",
-		},
-		"UserOpenID": []string{
-			"微信OpenID",
 		},
 	}
 }
 
-func (Order) FieldKeyID() string {
+func (FreightTemplate) FieldKeyID() string {
 	return "ID"
 }
 
-func (m *Order) FieldID() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyID())
+func (m *FreightTemplate) FieldID() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyID())
 }
 
-func (Order) FieldKeyOrderID() string {
-	return "OrderID"
+func (FreightTemplate) FieldKeyTemplateID() string {
+	return "TemplateID"
 }
 
-func (m *Order) FieldOrderID() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyOrderID())
+func (m *FreightTemplate) FieldTemplateID() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyTemplateID())
 }
 
-func (Order) FieldKeyUserID() string {
-	return "UserID"
+func (FreightTemplate) FieldKeyName() string {
+	return "Name"
 }
 
-func (m *Order) FieldUserID() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyUserID())
+func (m *FreightTemplate) FieldName() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyName())
 }
 
-func (Order) FieldKeyNickName() string {
-	return "NickName"
+func (FreightTemplate) FieldKeyDispatchAddr() string {
+	return "DispatchAddr"
 }
 
-func (m *Order) FieldNickName() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyNickName())
+func (m *FreightTemplate) FieldDispatchAddr() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyDispatchAddr())
 }
 
-func (Order) FieldKeyUserOpenID() string {
-	return "UserOpenID"
+func (FreightTemplate) FieldKeyDispatchTime() string {
+	return "DispatchTime"
 }
 
-func (m *Order) FieldUserOpenID() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyUserOpenID())
+func (m *FreightTemplate) FieldDispatchTime() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyDispatchTime())
 }
 
-func (Order) FieldKeyTotalPrice() string {
-	return "TotalPrice"
+func (FreightTemplate) FieldKeyIsFreeFreight() string {
+	return "IsFreeFreight"
 }
 
-func (m *Order) FieldTotalPrice() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyTotalPrice())
+func (m *FreightTemplate) FieldIsFreeFreight() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyIsFreeFreight())
 }
 
-func (Order) FieldKeyDiscountAmount() string {
-	return "DiscountAmount"
+func (FreightTemplate) FieldKeyCal() string {
+	return "Cal"
 }
 
-func (m *Order) FieldDiscountAmount() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyDiscountAmount())
+func (m *FreightTemplate) FieldCal() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyCal())
 }
 
-func (Order) FieldKeyFreightAmount() string {
-	return "FreightAmount"
+func (FreightTemplate) FieldKeyFirstRange() string {
+	return "FirstRange"
 }
 
-func (m *Order) FieldFreightAmount() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyFreightAmount())
+func (m *FreightTemplate) FieldFirstRange() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyFirstRange())
 }
 
-func (Order) FieldKeyActualAmount() string {
-	return "ActualAmount"
+func (FreightTemplate) FieldKeyFirstPrice() string {
+	return "FirstPrice"
 }
 
-func (m *Order) FieldActualAmount() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyActualAmount())
+func (m *FreightTemplate) FieldFirstPrice() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyFirstPrice())
 }
 
-func (Order) FieldKeyPaymentMethod() string {
-	return "PaymentMethod"
+func (FreightTemplate) FieldKeyContinueRange() string {
+	return "ContinueRange"
 }
 
-func (m *Order) FieldPaymentMethod() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyPaymentMethod())
+func (m *FreightTemplate) FieldContinueRange() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyContinueRange())
 }
 
-func (Order) FieldKeyRemark() string {
-	return "Remark"
+func (FreightTemplate) FieldKeyContinuePrice() string {
+	return "ContinuePrice"
 }
 
-func (m *Order) FieldRemark() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyRemark())
+func (m *FreightTemplate) FieldContinuePrice() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyContinuePrice())
 }
 
-func (Order) FieldKeyStatus() string {
-	return "Status"
-}
-
-func (m *Order) FieldStatus() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyStatus())
-}
-
-func (Order) FieldKeyExpiredAt() string {
-	return "ExpiredAt"
-}
-
-func (m *Order) FieldExpiredAt() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyExpiredAt())
-}
-
-func (Order) FieldKeyCreatedAt() string {
+func (FreightTemplate) FieldKeyCreatedAt() string {
 	return "CreatedAt"
 }
 
-func (m *Order) FieldCreatedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyCreatedAt())
+func (m *FreightTemplate) FieldCreatedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyCreatedAt())
 }
 
-func (Order) FieldKeyUpdatedAt() string {
+func (FreightTemplate) FieldKeyUpdatedAt() string {
 	return "UpdatedAt"
 }
 
-func (m *Order) FieldUpdatedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyUpdatedAt())
+func (m *FreightTemplate) FieldUpdatedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyUpdatedAt())
 }
 
-func (Order) FieldKeyDeletedAt() string {
+func (FreightTemplate) FieldKeyDeletedAt() string {
 	return "DeletedAt"
 }
 
-func (m *Order) FieldDeletedAt() *github_com_eden_framework_sqlx_builder.Column {
-	return OrderTable.F(m.FieldKeyDeletedAt())
+func (m *FreightTemplate) FieldDeletedAt() *github_com_eden_framework_sqlx_builder.Column {
+	return FreightTemplateTable.F(m.FieldKeyDeletedAt())
 }
 
-func (Order) ColRelations() map[string][]string {
+func (FreightTemplate) ColRelations() map[string][]string {
 	return map[string][]string{}
 }
 
-func (m *Order) IndexFieldNames() []string {
+func (m *FreightTemplate) IndexFieldNames() []string {
 	return []string{
-		"ExpiredAt",
+		"Cal",
 		"ID",
-		"OrderID",
-		"Status",
-		"UserID",
+		"IsFreeFreight",
+		"Name",
+		"TemplateID",
 	}
 }
 
-func (m *Order) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) github_com_eden_framework_sqlx_builder.SqlCondition {
+func (m *FreightTemplate) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) github_com_eden_framework_sqlx_builder.SqlCondition {
 	table := db.T(m)
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m)
 
@@ -290,7 +265,7 @@ func (m *Order) ConditionByStruct(db github_com_eden_framework_sqlx.DBExecutor) 
 	return condition
 }
 
-func (m *Order) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	if m.CreatedAt.IsZero() {
 		m.CreatedAt = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -305,7 +280,7 @@ func (m *Order) Create(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 }
 
-func (m *Order) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_sqlx.DBExecutor, updateFields []string) error {
+func (m *FreightTemplate) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_sqlx.DBExecutor, updateFields []string) error {
 
 	if len(updateFields) == 0 {
 		panic(fmt.Errorf("must have update fields"))
@@ -375,21 +350,21 @@ func (m *Order) CreateOnDuplicateWithUpdateFields(db github_com_eden_framework_s
 
 }
 
-func (m *Order) DeleteByStruct(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) DeleteByStruct(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	_, err := db.ExecExpr(
 		github_com_eden_framework_sqlx_builder.Delete().
 			From(
 				db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(m.ConditionByStruct(db)),
-				github_com_eden_framework_sqlx_builder.Comment("Order.DeleteByStruct"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.DeleteByStruct"),
 			),
 	)
 
 	return err
 }
 
-func (m *Order) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -401,7 +376,7 @@ func (m *Order) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Order.FetchByID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.FetchByID"),
 			),
 		m,
 	)
@@ -409,7 +384,7 @@ func (m *Order) FetchByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 	return err
 }
 
-func (m *Order) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
+func (m *FreightTemplate) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
 
 	if _, ok := fieldValues["UpdatedAt"]; !ok {
 		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -424,7 +399,7 @@ func (m *Order) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, 
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Order.UpdateByIDWithMap"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.UpdateByIDWithMap"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -442,14 +417,14 @@ func (m *Order) UpdateByIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, 
 
 }
 
-func (m *Order) UpdateByIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
+func (m *FreightTemplate) UpdateByIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
 
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
 	return m.UpdateByIDWithMap(db, fieldValues)
 
 }
 
-func (m *Order) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -462,7 +437,7 @@ func (m *Order) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor)
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
 				github_com_eden_framework_sqlx_builder.ForUpdate(),
-				github_com_eden_framework_sqlx_builder.Comment("Order.FetchByIDForUpdate"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.FetchByIDForUpdate"),
 			),
 		m,
 	)
@@ -470,7 +445,7 @@ func (m *Order) FetchByIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor)
 	return err
 }
 
-func (m *Order) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -481,13 +456,13 @@ func (m *Order) DeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Order.DeleteByID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.DeleteByID"),
 			))
 
 	return err
 }
 
-func (m *Order) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -507,7 +482,7 @@ func (m *Order) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) err
 					table.F("ID").Eq(m.ID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Order.SoftDeleteByID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.SoftDeleteByID"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -516,7 +491,7 @@ func (m *Order) SoftDeleteByID(db github_com_eden_framework_sqlx.DBExecutor) err
 
 }
 
-func (m *Order) FetchByOrderID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) FetchByTemplateID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -525,10 +500,10 @@ func (m *Order) FetchByOrderID(db github_com_eden_framework_sqlx.DBExecutor) err
 			From(
 				db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("OrderID").Eq(m.OrderID),
+					table.F("TemplateID").Eq(m.TemplateID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Order.FetchByOrderID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.FetchByTemplateID"),
 			),
 		m,
 	)
@@ -536,7 +511,7 @@ func (m *Order) FetchByOrderID(db github_com_eden_framework_sqlx.DBExecutor) err
 	return err
 }
 
-func (m *Order) UpdateByOrderIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
+func (m *FreightTemplate) UpdateByTemplateIDWithMap(db github_com_eden_framework_sqlx.DBExecutor, fieldValues github_com_eden_framework_sqlx_builder.FieldValues) error {
 
 	if _, ok := fieldValues["UpdatedAt"]; !ok {
 		fieldValues["UpdatedAt"] = github_com_eden_framework_sqlx_datatypes.Timestamp(time.Now())
@@ -548,10 +523,10 @@ func (m *Order) UpdateByOrderIDWithMap(db github_com_eden_framework_sqlx.DBExecu
 		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
 			Where(
 				github_com_eden_framework_sqlx_builder.And(
-					table.F("OrderID").Eq(m.OrderID),
+					table.F("TemplateID").Eq(m.TemplateID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Order.UpdateByOrderIDWithMap"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.UpdateByTemplateIDWithMap"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -562,21 +537,21 @@ func (m *Order) UpdateByOrderIDWithMap(db github_com_eden_framework_sqlx.DBExecu
 
 	rowsAffected, _ := result.RowsAffected()
 	if rowsAffected == 0 {
-		return m.FetchByOrderID(db)
+		return m.FetchByTemplateID(db)
 	}
 
 	return nil
 
 }
 
-func (m *Order) UpdateByOrderIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
+func (m *FreightTemplate) UpdateByTemplateIDWithStruct(db github_com_eden_framework_sqlx.DBExecutor, zeroFields ...string) error {
 
 	fieldValues := github_com_eden_framework_sqlx_builder.FieldValuesFromStructByNonZero(m, zeroFields...)
-	return m.UpdateByOrderIDWithMap(db, fieldValues)
+	return m.UpdateByTemplateIDWithMap(db, fieldValues)
 
 }
 
-func (m *Order) FetchByOrderIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) FetchByTemplateIDForUpdate(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -585,11 +560,11 @@ func (m *Order) FetchByOrderIDForUpdate(db github_com_eden_framework_sqlx.DBExec
 			From(
 				db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("OrderID").Eq(m.OrderID),
+					table.F("TemplateID").Eq(m.TemplateID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
 				github_com_eden_framework_sqlx_builder.ForUpdate(),
-				github_com_eden_framework_sqlx_builder.Comment("Order.FetchByOrderIDForUpdate"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.FetchByTemplateIDForUpdate"),
 			),
 		m,
 	)
@@ -597,7 +572,7 @@ func (m *Order) FetchByOrderIDForUpdate(db github_com_eden_framework_sqlx.DBExec
 	return err
 }
 
-func (m *Order) DeleteByOrderID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) DeleteByTemplateID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -605,16 +580,16 @@ func (m *Order) DeleteByOrderID(db github_com_eden_framework_sqlx.DBExecutor) er
 		github_com_eden_framework_sqlx_builder.Delete().
 			From(db.T(m),
 				github_com_eden_framework_sqlx_builder.Where(github_com_eden_framework_sqlx_builder.And(
-					table.F("OrderID").Eq(m.OrderID),
+					table.F("TemplateID").Eq(m.TemplateID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				)),
-				github_com_eden_framework_sqlx_builder.Comment("Order.DeleteByOrderID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.DeleteByTemplateID"),
 			))
 
 	return err
 }
 
-func (m *Order) SoftDeleteByOrderID(db github_com_eden_framework_sqlx.DBExecutor) error {
+func (m *FreightTemplate) SoftDeleteByTemplateID(db github_com_eden_framework_sqlx.DBExecutor) error {
 
 	table := db.T(m)
 
@@ -631,10 +606,10 @@ func (m *Order) SoftDeleteByOrderID(db github_com_eden_framework_sqlx.DBExecutor
 		github_com_eden_framework_sqlx_builder.Update(db.T(m)).
 			Where(
 				github_com_eden_framework_sqlx_builder.And(
-					table.F("OrderID").Eq(m.OrderID),
+					table.F("TemplateID").Eq(m.TemplateID),
 					table.F("DeletedAt").Eq(m.DeletedAt),
 				),
-				github_com_eden_framework_sqlx_builder.Comment("Order.SoftDeleteByOrderID"),
+				github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.SoftDeleteByTemplateID"),
 			).
 			Set(table.AssignmentsByFieldValues(fieldValues)...),
 	)
@@ -643,9 +618,9 @@ func (m *Order) SoftDeleteByOrderID(db github_com_eden_framework_sqlx.DBExecutor
 
 }
 
-func (m *Order) List(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) ([]Order, error) {
+func (m *FreightTemplate) List(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) ([]FreightTemplate, error) {
 
-	list := make([]Order, 0)
+	list := make([]FreightTemplate, 0)
 
 	table := db.T(m)
 	_ = table
@@ -654,7 +629,7 @@ func (m *Order) List(db github_com_eden_framework_sqlx.DBExecutor, condition git
 
 	finalAdditions := []github_com_eden_framework_sqlx_builder.Addition{
 		github_com_eden_framework_sqlx_builder.Where(condition),
-		github_com_eden_framework_sqlx_builder.Comment("Order.List"),
+		github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.List"),
 	}
 
 	if len(additions) > 0 {
@@ -671,7 +646,7 @@ func (m *Order) List(db github_com_eden_framework_sqlx.DBExecutor, condition git
 
 }
 
-func (m *Order) Count(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) (int, error) {
+func (m *FreightTemplate) Count(db github_com_eden_framework_sqlx.DBExecutor, condition github_com_eden_framework_sqlx_builder.SqlCondition, additions ...github_com_eden_framework_sqlx_builder.Addition) (int, error) {
 
 	count := -1
 
@@ -682,7 +657,7 @@ func (m *Order) Count(db github_com_eden_framework_sqlx.DBExecutor, condition gi
 
 	finalAdditions := []github_com_eden_framework_sqlx_builder.Addition{
 		github_com_eden_framework_sqlx_builder.Where(condition),
-		github_com_eden_framework_sqlx_builder.Comment("Order.Count"),
+		github_com_eden_framework_sqlx_builder.Comment("FreightTemplate.Count"),
 	}
 
 	if len(additions) > 0 {
@@ -701,7 +676,7 @@ func (m *Order) Count(db github_com_eden_framework_sqlx.DBExecutor, condition gi
 
 }
 
-func (m *Order) BatchFetchByExpiredAtList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_framework_sqlx_datatypes.Timestamp) ([]Order, error) {
+func (m *FreightTemplate) BatchFetchByCalList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.FreightCal) ([]FreightTemplate, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -709,13 +684,13 @@ func (m *Order) BatchFetchByExpiredAtList(db github_com_eden_framework_sqlx.DBEx
 
 	table := db.T(m)
 
-	condition := table.F("ExpiredAt").In(values)
+	condition := table.F("Cal").In(values)
 
 	return m.List(db, condition)
 
 }
 
-func (m *Order) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]Order, error) {
+func (m *FreightTemplate) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]FreightTemplate, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -729,7 +704,7 @@ func (m *Order) BatchFetchByIDList(db github_com_eden_framework_sqlx.DBExecutor,
 
 }
 
-func (m *Order) BatchFetchByOrderIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]Order, error) {
+func (m *FreightTemplate) BatchFetchByIsFreeFreightList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_framework_sqlx_datatypes.Bool) ([]FreightTemplate, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -737,13 +712,13 @@ func (m *Order) BatchFetchByOrderIDList(db github_com_eden_framework_sqlx.DBExec
 
 	table := db.T(m)
 
-	condition := table.F("OrderID").In(values)
+	condition := table.F("IsFreeFreight").In(values)
 
 	return m.List(db, condition)
 
 }
 
-func (m *Order) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecutor, values []github_com_eden_w2_w_lib_modules_constants_enums.OrderStatus) ([]Order, error) {
+func (m *FreightTemplate) BatchFetchByNameList(db github_com_eden_framework_sqlx.DBExecutor, values []string) ([]FreightTemplate, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -751,13 +726,13 @@ func (m *Order) BatchFetchByStatusList(db github_com_eden_framework_sqlx.DBExecu
 
 	table := db.T(m)
 
-	condition := table.F("Status").In(values)
+	condition := table.F("Name").In(values)
 
 	return m.List(db, condition)
 
 }
 
-func (m *Order) BatchFetchByUserIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]Order, error) {
+func (m *FreightTemplate) BatchFetchByTemplateIDList(db github_com_eden_framework_sqlx.DBExecutor, values []uint64) ([]FreightTemplate, error) {
 
 	if len(values) == 0 {
 		return nil, nil
@@ -765,7 +740,7 @@ func (m *Order) BatchFetchByUserIDList(db github_com_eden_framework_sqlx.DBExecu
 
 	table := db.T(m)
 
-	condition := table.F("UserID").In(values)
+	condition := table.F("TemplateID").In(values)
 
 	return m.List(db, condition)
 

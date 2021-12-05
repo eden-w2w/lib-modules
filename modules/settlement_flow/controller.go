@@ -225,7 +225,7 @@ func (c Controller) CreateSettlement(params CreateSettlementParams, db sqlx.DBEx
 	if db == nil {
 		db = c.db
 	}
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.SettlementFlow{
 		SettlementID: id,
 		UserID:       params.UserID,

@@ -54,7 +54,7 @@ func (c Controller) CreateUserByWechatSession(params CreateUserByWechatSessionPa
 	if !c.isInit {
 		logrus.Panicf("[UserController] not Init")
 	}
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.User{
 		UserID:      id,
 		Token:       c.generateToken(id),
@@ -108,14 +108,24 @@ func (c Controller) UpdateUserInfo(userID uint64, params UpdateUserInfoParams) e
 		if sqlx.DBErr(err).IsNotFound() {
 			return general_errors.UserNotFound
 		}
-		logrus.Errorf("[UpdateUserInfo] model.FetchByUserID(c.db) err: %v, userID: %d, params: %+v", err, userID, params)
+		logrus.Errorf(
+			"[UpdateUserInfo] model.FetchByUserID(c.db) err: %v, userID: %d, params: %+v",
+			err,
+			userID,
+			params,
+		)
 		return err
 	}
 
 	if params.Diff(&model) {
 		err = model.UpdateByUserIDWithStruct(c.db)
 		if err != nil {
-			logrus.Errorf("[UpdateUserInfo] model.UpdateByUserIDWithStruct(c.db) err: %v, userID: %d, params: %+v", err, userID, params)
+			logrus.Errorf(
+				"[UpdateUserInfo] model.UpdateByUserIDWithStruct(c.db) err: %v, userID: %d, params: %+v",
+				err,
+				userID,
+				params,
+			)
 			return general_errors.InternalError
 		}
 	}
@@ -132,7 +142,10 @@ func (c Controller) generateToken(userID uint64) string {
 	return hex.EncodeToString(hash)
 }
 
-func (c Controller) GetUserByUserID(userID uint64, db sqlx.DBExecutor, forUpdate bool) (model *databases.User, err error) {
+func (c Controller) GetUserByUserID(userID uint64, db sqlx.DBExecutor, forUpdate bool) (
+	model *databases.User,
+	err error,
+) {
 	if !c.isInit {
 		logrus.Panicf("[UserController] not Init")
 	}
@@ -229,32 +242,49 @@ func (c Controller) GetShippingAddressByShippingID(shippingID, userID uint64) (*
 		if sqlx.DBErr(err).IsNotFound() {
 			return nil, general_errors.NotFound.StatusError().WithMsg("未找到收货地址信息")
 		}
-		logrus.Errorf("[GetShippingAddressByShippingID] model.FetchByShippingID err: %v, shippingID: %d", err, shippingID)
+		logrus.Errorf(
+			"[GetShippingAddressByShippingID] model.FetchByShippingID err: %v, shippingID: %d",
+			err,
+			shippingID,
+		)
 		return nil, general_errors.InternalError
 	}
 	if userID != 0 && userID != model.UserID {
-		logrus.Errorf("[GetShippingAddressByShippingID] userID != 0 && userID != model.UserID, shippingID: %d", shippingID)
+		logrus.Errorf(
+			"[GetShippingAddressByShippingID] userID != 0 && userID != model.UserID, shippingID: %d",
+			shippingID,
+		)
 		return nil, general_errors.Forbidden
 	}
 	return model, nil
 }
 
-func (c Controller) CreateShippingAddress(params CreateShippingAddressParams, db sqlx.DBExecutor) (*databases.ShippingAddress, error) {
+func (c Controller) CreateShippingAddress(
+	params CreateShippingAddressParams,
+	db sqlx.DBExecutor,
+) (*databases.ShippingAddress, error) {
 	if !c.isInit {
 		logrus.Panicf("[UserController] not Init")
 	}
 	if db == nil {
 		db = c.db
 	}
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.ShippingAddress{
-		ShippingID: id,
-		UserID:     params.UserID,
-		Recipients: params.Recipients,
-		District:   params.District,
-		Address:    params.Address,
-		Mobile:     params.Mobile,
-		Default:    datatypes.BOOL_FALSE,
+		ShippingID:   id,
+		UserID:       params.UserID,
+		Recipients:   params.Recipients,
+		Province:     params.Province,
+		ProvinceCode: params.ProvinceCode,
+		City:         params.City,
+		CityCode:     params.CityCode,
+		District:     params.District,
+		DistrictCode: params.DistrictCode,
+		Street:       params.Street,
+		StreetCode:   params.StreetCode,
+		Address:      params.Address,
+		Mobile:       params.Mobile,
+		Default:      datatypes.BOOL_FALSE,
 	}
 	err := model.Create(db)
 	if err != nil {
@@ -284,11 +314,23 @@ func (c Controller) UpdateShippingAddress(params UpdateShippingAddressParams, us
 
 	model.Recipients = params.Recipients
 	model.Mobile = params.Mobile
+	model.Province = params.Province
+	model.ProvinceCode = params.ProvinceCode
+	model.City = params.City
+	model.CityCode = params.CityCode
 	model.District = params.District
+	model.DistrictCode = params.DistrictCode
+	model.Street = params.Street
+	model.StreetCode = params.StreetCode
 	model.Address = params.Address
 	err = model.UpdateByShippingIDWithStruct(db)
 	if err != nil {
-		logrus.Errorf("[UpdateShippingAddress] model.UpdateByShippingIDWithStruct err: %v, userID: %d, params: %+v", err, userID, params)
+		logrus.Errorf(
+			"[UpdateShippingAddress] model.UpdateByShippingIDWithStruct err: %v, userID: %d, params: %+v",
+			err,
+			userID,
+			params,
+		)
 		return general_errors.InternalError
 	}
 	return nil
@@ -311,7 +353,11 @@ func (c Controller) DeleteShippingAddress(shippingID uint64, userID uint64, db s
 		return general_errors.InternalError
 	}
 	if userID != 0 && userID != model.UserID {
-		logrus.Errorf("[UpdateShippingAddress] userID != 0 && userID != model.UserID, shippingID: %d, userID: %d", shippingID, userID)
+		logrus.Errorf(
+			"[UpdateShippingAddress] userID != 0 && userID != model.UserID, shippingID: %d, userID: %d",
+			shippingID,
+			userID,
+		)
 		return general_errors.Forbidden
 	}
 
@@ -340,7 +386,11 @@ func (c Controller) SetDefaultShippingAddress(userID, shippingID uint64, db sqlx
 		return general_errors.InternalError
 	}
 	if userID != model.UserID {
-		logrus.Errorf("[UpdateShippingAddress] userID != 0 && userID != model.UserID, shippingID: %d, userID: %d", shippingID, userID)
+		logrus.Errorf(
+			"[UpdateShippingAddress] userID != 0 && userID != model.UserID, shippingID: %d, userID: %d",
+			shippingID,
+			userID,
+		)
 		return general_errors.Forbidden
 	}
 

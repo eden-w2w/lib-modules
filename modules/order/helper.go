@@ -3,12 +3,13 @@ package order
 import (
 	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/databases"
+	"github.com/eden-w2w/lib-modules/modules/freight_trial"
 	"github.com/shopspring/decimal"
 )
 
 func ToDiscountAmount(
 	model *databases.MarketingDiscount,
-	goods []CreateOrderGoodsModelParams,
+	goods []freight_trial.FreightTrialParams,
 ) (preGoodsList []PreCreateOrderGoodsParams, totalAmount, discountAmount uint64) {
 	for _, item := range goods {
 		totalAmount += item.Price * uint64(item.Amount)

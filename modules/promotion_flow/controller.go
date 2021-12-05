@@ -34,7 +34,7 @@ func (c Controller) CreatePromotionFlow(params CreatePromotionFlowParams, db sql
 	if db == nil {
 		db = c.db
 	}
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model := &databases.PromotionFlow{
 		FlowID:          id,
 		UserID:          params.UserID,

@@ -39,7 +39,7 @@ func (c Controller) CreateBookingFlow(params CreateBookingFlowParams, db sqlx.DB
 		db = c.db
 	}
 	model := params.Model()
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model.FlowID = id
 
 	err := model.Create(db)

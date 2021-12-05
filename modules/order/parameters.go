@@ -39,6 +39,8 @@ type PreCreateOrderParams struct {
 	Discounts types.Uint64List `json:"discounts" default:""`
 	// 物料信息
 	Goods []CreateOrderGoodsParams `in:"body" json:"goods"`
+	// 收件地址ID
+	ShippingID uint64 `in:"body" json:"shippingID,string"`
 }
 
 type CreateOrderParams struct {
@@ -46,10 +48,14 @@ type CreateOrderParams struct {
 	UserID uint64 `in:"body" default:"" json:"userID,string"`
 	// 订单总额
 	TotalPrice uint64 `in:"body" json:"totalPrice"`
+	// 运费
+	FreightAmount uint64 `json:"freightAmount" default:""`
 	// 支付方式
 	PaymentMethod enums.PaymentMethod `in:"body" json:"paymentMethod"`
 	// 备注
 	Remark string `in:"body" default:"" json:"remark"`
+	// 收件地址ID
+	ShippingID uint64 `in:"body" json:"shippingID,string"`
 	// 收件人
 	Recipients string `in:"body" json:"recipients"`
 	// 收货地址
@@ -161,6 +167,8 @@ type GetMyOrdersResponse struct {
 	UserID uint64 `json:"userID,string"`
 	// 订单总额
 	TotalPrice uint64 `json:"totalPrice"`
+	// 运费
+	FreightAmount uint64 `json:"freightAmount"`
 	// 优惠金额
 	DiscountAmount uint64 `json:"discountAmount"`
 	// 实际金额
@@ -188,6 +196,8 @@ type GetOrderByIDResponse struct {
 	OpenID string `json:"openID"`
 	// 订单总额
 	TotalPrice uint64 `json:"totalPrice"`
+	// 运费
+	FreightAmount uint64 `json:"freightAmount"`
 	// 优惠金额
 	DiscountAmount uint64 `json:"discountAmount"`
 	// 实际金额
@@ -221,10 +231,14 @@ type GetOrderByIDResponse struct {
 type UpdateOrderParams struct {
 	// 订单状态
 	Status enums.OrderStatus `json:"status" default:""`
+	// 运费
+	FreightAmount *uint64 `json:"freightAmount" default:""`
 	// 优惠金额
 	DiscountAmount uint64 `json:"discountAmount" default:""`
 	// 备注
 	Remark string `json:"remark" default:""`
+	// 收件地址ID
+	ShippingID uint64 `json:"shippingID" default:""`
 	// 收件人
 	Recipients string `json:"recipients" default:""`
 	// 收货地址

@@ -12,6 +12,7 @@ import (
 //go:generate eden generate tag Goods --defaults=true
 // @def primary ID
 // @def unique_index U_goods_id GoodsID
+// @def index I_freight FreightTemplateID
 type Goods struct {
 	datatypes.PrimaryID
 	// 业务ID
@@ -20,8 +21,10 @@ type Goods struct {
 	Name string `json:"name" db:"f_name"`
 	// 描述
 	Comment string `json:"comment" db:"f_comment,default=''"`
-	// 发货地
-	DispatchAddr string `json:"dispatchAddr" db:"f_dispatch_addr"`
+	// 运费模板
+	FreightTemplateID uint64 `json:"freightTemplateID,string" db:"f_freight_template_id"`
+	// 单品净重，单位克（用于邮费计算）
+	UnitNetWeight uint32 `json:"unitNetWeight" db:"f_unit_net_weight,default=0"`
 	// 销量
 	Sales uint32 `json:"sales" db:"f_sales,default=0"`
 	// 标题图片
@@ -30,8 +33,6 @@ type Goods struct {
 	Pictures types.GoodsPictures `json:"pictures" db:"f_pictures,size=65535"`
 	// 规格
 	Specifications types.JsonArrayString `json:"specifications" db:"f_specification,size=1024"`
-	// 物流政策
-	LogisticPolicy string `json:"logisticPolicy" db:"f_logistic_policy,size=512,default=''"`
 	// 价格
 	Price uint64 `json:"price" db:"f_price"`
 	// 库存

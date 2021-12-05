@@ -68,7 +68,7 @@ func (p CreateDiscountParams) Model() (model *databases.MarketingDiscount, err e
 			}
 		}
 	}
-	id, _ := id_generator.GetGenerator().GenerateUniqueID()
+	id := id_generator.GetGenerator().GenerateUniqueID()
 	model = &databases.MarketingDiscount{
 		DiscountID:         id,
 		Name:               p.Name,
