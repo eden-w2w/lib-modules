@@ -146,17 +146,17 @@ type CreateShippingAddressParams struct {
 	// 省编码
 	ProvinceCode string `json:"provinceCode"`
 	// 市名称
-	City string `json:"city"`
+	City string `json:"city" default:""`
 	// 市编码
-	CityCode string `json:"cityCode"`
+	CityCode string `json:"cityCode" default:""`
 	// 区县名称
-	District string `json:"district"`
+	District string `json:"district" default:""`
 	// 区县编码
-	DistrictCode string `json:"districtCode"`
+	DistrictCode string `json:"districtCode" default:""`
 	// 街道名称
-	Street string `json:"street"`
+	Street string `json:"street" default:""`
 	// 街道编码
-	StreetCode string `json:"streetCode"`
+	StreetCode string `json:"streetCode" default:""`
 	// 详细地址
 	Address string `json:"address"`
 	// 联系电话

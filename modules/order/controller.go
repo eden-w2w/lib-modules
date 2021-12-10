@@ -109,13 +109,15 @@ func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 	}
 
 	// 试算运费
-	shipping, err := user.GetController().GetShippingAddressByShippingID(p.ShippingID, p.UserID)
-	if err != nil {
-		return nil, 0, 0, 0, 0, "", err
-	}
-	freightPrice, freightName, err = freight_trial.FreightTrial(goodsList, shipping)
-	if err != nil {
-		return nil, 0, 0, 0, 0, "", err
+	if p.ShippingID != 0 {
+		shipping, err := user.GetController().GetShippingAddressByShippingID(p.ShippingID, p.UserID)
+		if err != nil {
+			return nil, 0, 0, 0, 0, "", err
+		}
+		freightPrice, freightName, err = freight_trial.FreightTrial(goodsList, shipping)
+		if err != nil {
+			return nil, 0, 0, 0, 0, "", err
+		}
 	}
 
 	// 计算优惠，目前暂时只支持同时进行一种优惠

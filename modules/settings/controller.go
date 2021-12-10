@@ -48,6 +48,10 @@ func (c *Controller) Init(db sqlx.DBExecutor) {
 }
 
 func (c Controller) GetSetting() *databases.Settings {
+	err := c.model.FetchBySettingsID(c.db)
+	if err != nil {
+		return nil
+	}
 	return c.model
 }
 

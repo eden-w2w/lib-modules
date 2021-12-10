@@ -40,7 +40,7 @@ type PreCreateOrderParams struct {
 	// 物料信息
 	Goods []CreateOrderGoodsParams `in:"body" json:"goods"`
 	// 收件地址ID
-	ShippingID uint64 `in:"body" json:"shippingID,string"`
+	ShippingID uint64 `in:"body" json:"shippingID,string" default:""`
 }
 
 type CreateOrderParams struct {

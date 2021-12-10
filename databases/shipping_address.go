@@ -25,17 +25,17 @@ type ShippingAddress struct {
 	// 省编码
 	ProvinceCode string `json:"provinceCode" db:"f_province_code"`
 	// 市名称
-	City string `json:"city" db:"f_city"`
+	City string `json:"city" db:"f_city,default=''"`
 	// 市编码
-	CityCode string `json:"cityCode" db:"f_city_code"`
+	CityCode string `json:"cityCode" db:"f_city_code,default=''"`
 	// 区县名称
-	District string `json:"district" db:"f_district"`
+	District string `json:"district" db:"f_district,default=''"`
 	// 区县编码
-	DistrictCode string `json:"districtCode" db:"f_district_code"`
+	DistrictCode string `json:"districtCode" db:"f_district_code,default=''"`
 	// 街道名称
-	Street string `json:"street" db:"f_street"`
+	Street string `json:"street" db:"f_street,default=''"`
 	// 街道编码
-	StreetCode string `json:"streetCode" db:"f_street_code"`
+	StreetCode string `json:"streetCode" db:"f_street_code,default=''"`
 	// 详细地址
 	Address string `json:"address" db:"f_address"`
 	// 联系电话
