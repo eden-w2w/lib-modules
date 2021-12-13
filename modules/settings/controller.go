@@ -64,9 +64,7 @@ func (c Controller) UpdateSetting(params UpdateSettingParams, db sqlx.DBExecutor
 		db = c.db
 	}
 
-	if params.PromotionMainPicture != "" {
-		c.model.PromotionMainPicture = params.PromotionMainPicture
-	}
+	params.Fill(c.model)
 
 	err := c.model.UpdateBySettingsIDWithStruct(db)
 	if err != nil {

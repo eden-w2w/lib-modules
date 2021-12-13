@@ -14,6 +14,11 @@ type Settings struct {
 	SettingsID uint64 `json:"settingsID,string" db:"f_settings_id"`
 	// 推荐有礼分享标题图片
 	PromotionMainPicture string `json:"promotionMainPicture" db:"f_promotion_main_picture,default=''"`
+	// 消息推送
+	// 是否启用消息推送
+	WebhookEnabled datatypes.Bool `json:"webhookEnabled" db:"f_webhook_enabled,default=2"`
+	// 地址
+	WebhookURL string `json:"webhookURL" db:"f_webhook_url,default=''"`
 
 	datatypes.OperateTime
 }

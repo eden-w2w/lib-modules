@@ -32,6 +32,8 @@ func (Settings) Comments() map[string]string {
 	return map[string]string{
 		"PromotionMainPicture": "推荐有礼分享标题图片",
 		"SettingsID":           "业务ID",
+		"WebhookEnabled":       "消息推送",
+		"WebhookURL":           "地址",
 	}
 }
 
@@ -64,6 +66,13 @@ func (Settings) ColDescriptions() map[string][]string {
 		"SettingsID": []string{
 			"业务ID",
 		},
+		"WebhookEnabled": []string{
+			"消息推送",
+			"是否启用消息推送",
+		},
+		"WebhookURL": []string{
+			"地址",
+		},
 	}
 }
 
@@ -89,6 +98,22 @@ func (Settings) FieldKeyPromotionMainPicture() string {
 
 func (m *Settings) FieldPromotionMainPicture() *github_com_eden_framework_sqlx_builder.Column {
 	return SettingsTable.F(m.FieldKeyPromotionMainPicture())
+}
+
+func (Settings) FieldKeyWebhookEnabled() string {
+	return "WebhookEnabled"
+}
+
+func (m *Settings) FieldWebhookEnabled() *github_com_eden_framework_sqlx_builder.Column {
+	return SettingsTable.F(m.FieldKeyWebhookEnabled())
+}
+
+func (Settings) FieldKeyWebhookURL() string {
+	return "WebhookURL"
+}
+
+func (m *Settings) FieldWebhookURL() *github_com_eden_framework_sqlx_builder.Column {
+	return SettingsTable.F(m.FieldKeyWebhookURL())
 }
 
 func (Settings) FieldKeyCreatedAt() string {
