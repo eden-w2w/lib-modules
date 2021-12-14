@@ -2,6 +2,7 @@ package wechat
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	errors "github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
@@ -172,21 +173,21 @@ func (c Controller) ExchangeEncryptedData(sessionKey string, params WechatUserIn
 	return plain, nil
 }
 
-func (c Controller) GetUnlimitedQrCode(params qrcode.QRCoder) (buffer []byte, err error) {
+func (c Controller) GetUnlimitedQrCode(params qrcode.QRCoder) (result string, err error) {
 	if !c.isInit {
 		logrus.Panicf("[WechatController] not Init")
 	}
-	buffer, err = c.program.GetQRCode().GetWXACodeUnlimit(params)
+	buffer, err := c.program.GetQRCode().GetWXACodeUnlimit(params)
 	if err != nil {
 		logrus.Errorf(
 			"[GetUnlimitedQrCode] c.program.GetQRCode().GetWXACodeUnlimit(params) err: %v, params: %+v",
 			err,
 			params,
 		)
-		return nil, errors.BadGateway
+		return "", errors.BadGateway
 	}
 
-	return
+	return base64.StdEncoding.EncodeToString(buffer), nil
 }
 
 func (c Controller) CreatePrePayment(
