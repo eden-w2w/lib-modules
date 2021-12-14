@@ -72,10 +72,7 @@ func (c Controller) PreCreateOrder(p PreCreateOrderParams) (
 
 		var isBooking = datatypes.BOOL_FALSE
 		var bookingFlowID = uint64(0)
-		flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
-			gModel.GoodsID,
-			enums.BOOKING_STATUS__PROCESS,
-		)
+		flows, err := booking_flow.GetController().GetBookingFlowByGoodsID(gModel.GoodsID)
 		if err != nil {
 			return nil, 0, 0, 0, 0, "", err
 		}
@@ -189,10 +186,7 @@ func (c Controller) CreateOrder(p CreateOrderParams) (*databases.Order, error) {
 
 				var isBooking = datatypes.BOOL_FALSE
 				var bookingFlowID = uint64(0)
-				flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
-					gModel.GoodsID,
-					enums.BOOKING_STATUS__PROCESS,
-				)
+				flows, err := booking_flow.GetController().GetBookingFlowByGoodsID(gModel.GoodsID)
 				if err != nil {
 					return err
 				}

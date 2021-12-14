@@ -74,10 +74,7 @@ func (o *OrderEvent) OnOrderConfirmEvent(db sqlx.DBExecutor, oModel *databases.O
 			continue
 		}
 
-		flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
-			orderGoods.GoodsID,
-			enums.BOOKING_STATUS__PROCESS,
-		)
+		flows, err := booking_flow.GetController().GetBookingFlowByGoodsID(orderGoods.GoodsID)
 		if err != nil {
 			return err
 		}
@@ -269,10 +266,7 @@ func (o *OrderEvent) OnOrderCloseEvent(
 		} else {
 			o.Lock()
 			// 恢复预售销量
-			flows, err := booking_flow.GetController().GetBookingFlowByGoodsIDAndStatus(
-				g.GoodsID,
-				enums.BOOKING_STATUS__PROCESS,
-			)
+			flows, err := booking_flow.GetController().GetBookingFlowByGoodsID(g.GoodsID)
 			if err != nil {
 				o.Unlock()
 				return err

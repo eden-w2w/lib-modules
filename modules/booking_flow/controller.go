@@ -2,11 +2,13 @@ package booking_flow
 
 import (
 	"github.com/eden-framework/sqlx"
+	"github.com/eden-framework/sqlx/datatypes"
 	"github.com/eden-w2w/lib-modules/constants/enums"
 	"github.com/eden-w2w/lib-modules/constants/general_errors"
 	"github.com/eden-w2w/lib-modules/databases"
 	"github.com/eden-w2w/lib-modules/modules/id_generator"
 	"github.com/sirupsen/logrus"
+	"time"
 )
 
 var controller *Controller
@@ -123,27 +125,36 @@ func (c Controller) GetBookingFlowByID(flowID uint64, db sqlx.DBExecutor, forUpd
 	return model, nil
 }
 
-func (c Controller) GetBookingFlowByGoodsIDAndStatus(goodsID uint64, status enums.BookingStatus) (
+func (c Controller) GetBookingFlowByGoodsID(goodsID uint64) (
 	[]databases.BookingFlow,
 	error,
 ) {
 	if !c.isInit {
 		logrus.Panicf("[BookingFlowController] not Init")
 	}
+	currentTime := time.Now()
 	list, _, err := c.GetBookingFlows(
 		GetBookingFlowParams{
-			GoodsID: goodsID,
-			Status:  status,
+			GoodsID:        goodsID,
+			Status:         enums.BOOKING_STATUS__PROCESS,
+			StartTimeBegin: datatypes.MySQLTimestamp(currentTime),
 		}, false,
 	)
 	if err != nil {
 		logrus.Errorf(
-			"[GetBookingFlowByGoodsIDAndStatus] c.GetBookingFlows err: %v, goodsID: %d, status: %s",
+			"[GetBookingFlowByGoodsID] c.GetBookingFlows err: %v, goodsID: %d",
 			err,
 			goodsID,
-			status.String(),
 		)
 		return nil, general_errors.InternalError
+	}
+	for i := 0; i < len(list); i++ {
+		if !list[i].EndTime.IsZero() {
+			if currentTime.After(time.Time(list[i].EndTime)) {
+				list = append(list[:i], list[i+1:]...)
+				i--
+			}
+		}
 	}
 	return list, nil
 }
