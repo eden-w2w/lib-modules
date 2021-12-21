@@ -31,6 +31,7 @@ func (Settings) UniqueIndexes() github_com_eden_framework_sqlx_builder.Indexes {
 func (Settings) Comments() map[string]string {
 	return map[string]string{
 		"PromotionMainPicture": "推荐有礼分享标题图片",
+		"ServicePhone":         "客服热线",
 		"SettingsID":           "业务ID",
 		"WebhookEnabled":       "消息推送",
 		"WebhookURL":           "地址",
@@ -62,6 +63,9 @@ func (Settings) ColDescriptions() map[string][]string {
 	return map[string][]string{
 		"PromotionMainPicture": []string{
 			"推荐有礼分享标题图片",
+		},
+		"ServicePhone": []string{
+			"客服热线",
 		},
 		"SettingsID": []string{
 			"业务ID",
@@ -98,6 +102,14 @@ func (Settings) FieldKeyPromotionMainPicture() string {
 
 func (m *Settings) FieldPromotionMainPicture() *github_com_eden_framework_sqlx_builder.Column {
 	return SettingsTable.F(m.FieldKeyPromotionMainPicture())
+}
+
+func (Settings) FieldKeyServicePhone() string {
+	return "ServicePhone"
+}
+
+func (m *Settings) FieldServicePhone() *github_com_eden_framework_sqlx_builder.Column {
+	return SettingsTable.F(m.FieldKeyServicePhone())
 }
 
 func (Settings) FieldKeyWebhookEnabled() string {

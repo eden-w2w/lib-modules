@@ -7,6 +7,8 @@ import (
 
 type UpdateSettingParams struct {
 	PromotionMainPicture string `json:"promotionMainPicture" default:""`
+	// 客服热线
+	ServicePhone string `json:"servicePhone" default:""`
 	// 消息推送
 	// 是否启用消息推送
 	WebhookEnabled datatypes.Bool `json:"webhookEnabled" default:""`
